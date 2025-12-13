@@ -1,0 +1,21 @@
+<h2>IoT Sensor Dashboard</h2>
+<table border="1">
+  <tr>
+    <th>Time</th>
+    <th>Temp</th>
+    <th>Humidity</th>
+    <th>Soil</th>
+    <th>pH</th>
+    <th>Alert</th>
+  </tr>
+  {% for r in readings %}
+  <tr>
+    <td>{{ r.created_at }}</td>
+    <td>{{ r.temperature }}</td>
+    <td>{{ r.humidity }}</td>
+    <td>{{ r.soil_moisture }}</td>
+    <td>{{ r.ph }}</td>
+    <td>{{ r.alert }}</td>
+  </tr>
+  {% endfor %}
+</table>
