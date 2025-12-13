@@ -1,21 +1,137 @@
-<h2>IoT Sensor Dashboard</h2>
-<table border="1">
-  <tr>
-    <th>Time</th>
-    <th>Temp</th>
-    <th>Humidity</th>
-    <th>Soil</th>
-    <th>pH</th>
-    <th>Alert</th>
-  </tr>
-  {% for r in readings %}
-  <tr>
-    <td>{{ r.created_at }}</td>
-    <td>{{ r.temperature }}</td>
-    <td>{{ r.humidity }}</td>
-    <td>{{ r.soil_moisture }}</td>
-    <td>{{ r.ph }}</td>
-    <td>{{ r.alert }}</td>
-  </tr>
-  {% endfor %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IoT Sensor Dashboard</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: Arial; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+
+    .alert-row {
+      background-color: #ffcccc;
+      font-weight: bold;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 5px;
+      color: white;
+    }
+
+    .badge-ok { background-color: green; }
+    .badge-alert { background-color: red; }
+  </style>
+</head>
+
+<body>
+
+<h2>IoT Sensor Dashboard (Live)</h2>
+
+<!-- Charts -->
+<canvas id="tempChart"></canvas>
+<canvas id="humidChart"></canvas>
+<canvas id="soilChart"></canvas>
+<canvas id="phChart"></canvas>
+
+<!-- Table -->
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Temp (°C)</th>
+      <th>Humidity (%)</th>
+      <th>Soil</th>
+      <th>pH</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="table-body"></tbody>
 </table>
+
+<script>
+let tempChart, humidChart, soilChart, phChart;
+
+function initCharts(labels, data) {
+  tempChart = new Chart(document.getElementById('tempChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Temperature', data: data.temp }] }
+  });
+
+  humidChart = new Chart(document.getElementById('humidChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Humidity', data: data.humid }] }
+  });
+
+  soilChart = new Chart(document.getElementById('soilChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Soil Moisture', data: data.soil }] }
+  });
+
+  phChart = new Chart(document.getElementById('phChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'pH', data: data.ph }] }
+  });
+}
+
+function updateDashboard() {
+  fetch('/api/latest/')
+    .then(res => res.json())
+    .then(data => {
+      let labels = [];
+      let temp = [], humid = [], soil = [], ph = [];
+      let table = '';
+
+      data.forEach(r => {
+        labels.push(r.time);
+        temp.push(r.temperature);
+        humid.push(r.humidity);
+        soil.push(r.soil);
+        ph.push(r.ph);
+
+        table += `
+          <tr class="${r.alert ? 'alert-row' : ''}">
+            <td>${r.time}</td>
+            <td>${r.temperature}</td>
+            <td>${r.humidity}</td>
+            <td>${r.soil}</td>
+            <td>${r.ph}</td>
+            <td>
+              <span class="badge ${r.alert ? 'badge-alert' : 'badge-ok'}">
+                ${r.alert ? 'ALERT' : 'OK'}
+              </span>
+            </td>
+          </tr>`;
+      });
+
+      document.getElementById('table-body').innerHTML = table;
+
+      if (!tempChart) {
+        initCharts(labels, { temp, humid, soil, ph });
+      } else {
+        tempChart.data.labels = labels;
+        tempChart.data.datasets[0].data = temp;
+        tempChart.update();
+
+        humidChart.data.datasets[0].data = humid;
+        humidChart.update();
+
+        soilChart.data.datasets[0].data = soil;
+        soilChart.update();
+
+        phChart.data.datasets[0].data = ph;
+        phChart.update();
+      }
+    });
+}
+
+// Auto refresh every 5 seconds
+setInterval(updateDashboard, 5000);
+updateDashboard();
+</script>
+
+</body>
+</html>

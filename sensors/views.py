@@ -36,3 +36,20 @@ def sensor_data_api(request):
 def dashboard(request):
     readings = SensorReading.objects.order_by('-created_at')[:20]
     return render(request, 'dashboard.html', {'readings': readings})
+
+def latest_readings(request):
+    readings = SensorReading.objects.order_by('-created_at')[:20]
+
+    data = [
+        {
+            "time": r.created_at.strftime("%H:%M:%S"),
+            "temperature": r.temperature,
+            "humidity": r.humidity,
+            "soil": r.soil_moisture,
+            "ph": r.ph,
+            "alert": r.alert
+        }
+        for r in readings[::-1]
+    ]
+
+    return JsonResponse(data, safe=False)
