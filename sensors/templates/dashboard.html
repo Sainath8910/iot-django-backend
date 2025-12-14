@@ -1,134 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html class="dark" lang="en">
 <head>
-  <title>IoT Sensor Dashboard</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Monitoring Dashboard</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
-  <style>
-    body { font-family: Arial; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
-    .alert-row {
-      background-color: #ffcccc;
-      font-weight: bold;
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#49e619",
+        "background-dark": "#152111",
+        "card-dark": "#1a2c15",
+        "border-dark": "#2c4724",
+        "text-secondary": "#9fc893"
+      },
+      fontFamily: {
+        display: ["Manrope"],
+        body: ["Noto Sans"]
+      }
     }
+  }
+}
+</script>
 
-    .badge {
-      padding: 4px 8px;
-      border-radius: 5px;
-      color: white;
-    }
-
-    .badge-ok { background-color: green; }
-    .badge-alert { background-color: red; }
-  </style>
+<style>
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: #2c4724; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #49e619; }
+</style>
 </head>
 
-<body>
+<body class="bg-background-dark text-white font-display overflow-hidden">
 
-<h2>IoT Sensor Dashboard (Live)</h2>
+<div class="flex h-screen">
 
-<!-- Charts -->
-<canvas id="tempChart"></canvas>
-<canvas id="humidChart"></canvas>
-<canvas id="soilChart"></canvas>
-<canvas id="phChart"></canvas>
+<!-- ================= SIDEBAR ================= -->
+<aside class="w-20 lg:w-64 bg-background-dark border-r border-border-dark flex flex-col">
+  <div class="h-20 flex items-center justify-center lg:px-6 border-b border-border-dark">
+    <div class="flex items-center gap-3">
+      <div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined">eco</span>
+      </div>
+      <span class="hidden lg:block font-bold">EcoMonitor</span>
+    </div>
+  </div>
+</aside>
 
-<!-- Table -->
-<table>
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Temp (°C)</th>
-      <th>Humidity (%)</th>
-      <th>Soil</th>
-      <th>pH</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="table-body"></tbody>
+<!-- ================= MAIN ================= -->
+<main class="flex-1 flex flex-col">
+
+<header class="h-20 border-b border-border-dark bg-background-dark flex items-center justify-between px-6">
+  <div>
+    <h1 class="text-xl font-bold">Live Monitoring</h1>
+    <p class="text-sm text-text-secondary">Greenhouse Unit A-42</p>
+  </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+
+<!-- ================= KPI CARDS ================= -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+<div class="bg-card-dark border border-border-dark rounded-xl p-6">
+  <p class="text-text-secondary flex gap-1">
+    <span class="material-symbols-outlined">thermostat</span> Temperature
+  </p>
+  <h3 id="tempValue" class="text-3xl font-bold mt-2">--°C</h3>
+  <canvas id="tempChart" class="h-24 mt-4"></canvas>
+</div>
+
+<div class="bg-card-dark border border-border-dark rounded-xl p-6">
+  <p class="text-text-secondary flex gap-1">
+    <span class="material-symbols-outlined">water_drop</span> Humidity
+  </p>
+  <h3 id="humidValue" class="text-3xl font-bold mt-2">--%</h3>
+  <canvas id="humidChart" class="h-24 mt-4"></canvas>
+</div>
+
+<div class="bg-card-dark border border-border-dark rounded-xl p-6">
+  <p class="text-text-secondary flex gap-1">
+    <span class="material-symbols-outlined">potted_plant</span> Soil Moisture
+  </p>
+  <h3 id="soilValue" class="text-3xl font-bold mt-2">--%</h3>
+  <canvas id="soilChart" class="h-24 mt-4"></canvas>
+</div>
+
+<div class="bg-card-dark border border-border-dark rounded-xl p-6">
+  <p class="text-text-secondary flex gap-1">
+    <span class="material-symbols-outlined">science</span> pH Level
+  </p>
+  <h3 id="phValue" class="text-3xl font-bold mt-2">--</h3>
+  <canvas id="phChart" class="h-24 mt-4"></canvas>
+</div>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+<div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
+<table class="w-full text-center">
+<thead class="bg-[#1e3419]">
+<tr>
+  <th class="p-4 text-xs text-text-secondary">Time</th>
+  <th class="p-4 text-xs text-text-secondary">Temp</th>
+  <th class="p-4 text-xs text-text-secondary">Humidity</th>
+  <th class="p-4 text-xs text-text-secondary">Soil</th>
+  <th class="p-4 text-xs text-text-secondary">pH</th>
+  <th class="p-4 text-xs text-text-secondary">Status</th>
+</tr>
+</thead>
+<tbody id="tableBody" class="divide-y divide-border-dark text-sm"></tbody>
 </table>
+</div>
 
+</div>
+</main>
+</div>
+
+<!-- ================= SCRIPT ================= -->
 <script>
 let tempChart, humidChart, soilChart, phChart;
 
-function initCharts(labels, data) {
-  tempChart = new Chart(document.getElementById('tempChart'), {
+function createChart(id) {
+  return new Chart(document.getElementById(id), {
     type: 'line',
-    data: { labels, datasets: [{ label: 'Temperature', data: data.temp }] }
-  });
-
-  humidChart = new Chart(document.getElementById('humidChart'), {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'Humidity', data: data.humid }] }
-  });
-
-  soilChart = new Chart(document.getElementById('soilChart'), {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'Soil Moisture', data: data.soil }] }
-  });
-
-  phChart = new Chart(document.getElementById('phChart'), {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'pH', data: data.ph }] }
+    data: { labels: [], datasets: [{ data: [], borderWidth: 2, tension: 0.4 }] },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
   });
 }
 
+tempChart = createChart("tempChart");
+humidChart = createChart("humidChart");
+soilChart = createChart("soilChart");
+phChart = createChart("phChart");
+
 function updateDashboard() {
-  fetch('/api/latest/')
+  fetch("/latest/")
     .then(res => res.json())
     .then(data => {
-      let labels = [];
-      let temp = [], humid = [], soil = [], ph = [];
-      let table = '';
+      let labels=[], t=[], h=[], s=[], p=[], rows="";
 
       data.forEach(r => {
         labels.push(r.time);
-        temp.push(r.temperature);
-        humid.push(r.humidity);
-        soil.push(r.soil);
-        ph.push(r.ph);
+        t.push(r.temperature);
+        h.push(r.humidity);
+        s.push(r.soil);
+        p.push(r.ph);
 
-        table += `
-          <tr class="${r.alert ? 'alert-row' : ''}">
-            <td>${r.time}</td>
-            <td>${r.temperature}</td>
-            <td>${r.humidity}</td>
-            <td>${r.soil}</td>
-            <td>${r.ph}</td>
-            <td>
-              <span class="badge ${r.alert ? 'badge-alert' : 'badge-ok'}">
-                ${r.alert ? 'ALERT' : 'OK'}
-              </span>
-            </td>
-          </tr>`;
+        rows += `
+        <tr class="hover:bg-white/5">
+          <td class="p-4">${r.time}</td>
+          <td class="p-4">${r.temperature}°C</td>
+          <td class="p-4">${r.humidity}%</td>
+          <td class="p-4 ${r.alert ? 'text-red-400 font-bold':''}">${r.soil}%</td>
+          <td class="p-4">${r.ph}</td>
+          <td class="p-4">
+            <span class="px-3 py-1 rounded-full text-xs font-bold ${
+              r.alert ? 'bg-red-500/20 text-red-500' : 'bg-primary/20 text-primary'
+            }">
+              ${r.alert ? 'ALERT' : 'NORMAL'}
+            </span>
+          </td>
+        </tr>`;
       });
 
-      document.getElementById('table-body').innerHTML = table;
+      tableBody.innerHTML = rows;
 
-      if (!tempChart) {
-        initCharts(labels, { temp, humid, soil, ph });
-      } else {
-        tempChart.data.labels = labels;
-        tempChart.data.datasets[0].data = temp;
-        tempChart.update();
+      const last = data[data.length - 1];
+      tempValue.textContent = last.temperature + "°C";
+      humidValue.textContent = last.humidity + "%";
+      soilValue.textContent = last.soil + "%";
+      phValue.textContent = last.ph;
 
-        humidChart.data.datasets[0].data = humid;
-        humidChart.update();
-
-        soilChart.data.datasets[0].data = soil;
-        soilChart.update();
-
-        phChart.data.datasets[0].data = ph;
-        phChart.update();
-      }
+      [tempChart, humidChart, soilChart, phChart].forEach((c, i) => {
+        c.data.labels = labels;
+        c.data.datasets[0].data = [t, h, s, p][i];
+        c.update();
+      });
     });
 }
 
-// Auto refresh every 5 seconds
 setInterval(updateDashboard, 5000);
 updateDashboard();
 </script>
