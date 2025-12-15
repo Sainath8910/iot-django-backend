@@ -51,7 +51,9 @@ def sensor_data_api(request):
                 ph=data.get('ph'),
                 alert=data.get('alert')
             )
-
+            if data.alert:
+                send_alert_email(data)
+                send_alert_sms(data)
             return JsonResponse({"status": "success"}, status=200)
 
         except Exception as e:
