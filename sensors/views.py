@@ -3,6 +3,39 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import SensorReading
+from django.core.mail import send_mail
+from twilio.rest import Client
+from django.conf import settings
+
+
+def send_alert_email(sensor_data):
+    send_mail(
+        subject="🚨 IoT ALERT DETECTED",
+        message=f"""
+Alert detected!
+
+Temperature: {sensor_data.temperature}
+Humidity: {sensor_data.humidity}
+Soil: {sensor_data.soil}
+pH: {sensor_data.ph}
+Time: {sensor_data.timestamp}
+        """,
+        from_email='your_email@gmail.com',
+        recipient_list=['admin@gmail.com'],
+        fail_silently=False
+    )
+
+def send_alert_sms(sensor_data):
+    client = Client(
+        settings.TWILIO_ACCOUNT_SID,
+        settings.TWILIO_AUTH_TOKEN
+    )
+
+    client.messages.create(
+        body=f"ALERT! Temp:{sensor_data.temperature} Soil:{sensor_data.soil} pH:{sensor_data.ph}",
+        from_=settings.TWILIO_PHONE_NUMBER,
+        to='+919490290489'
+    )
 
 @csrf_exempt
 def sensor_data_api(request):
