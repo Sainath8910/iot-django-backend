@@ -86,11 +86,13 @@ def send_alert_sms(sensor_data, user):
 
 def send_alerts_async(sensor_data, user):
     try:
+        print("Async alert started")
         send_alert_email(sensor_data, user)
+        print("Email sent")
         send_alert_sms(sensor_data, user)
     except Exception as e:
         print("Async alert failed:", e)
-        
+
 @csrf_exempt
 def sensor_data_api(request):
 
