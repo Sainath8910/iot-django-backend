@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from .forms import CustomUserCreationForm,EmailOrUsernameLoginForm
 
 def register_view(request):
@@ -54,28 +55,32 @@ def send_alert_email(sensor_data,user):
             Humidity: {sensor_data.get('humidity')}
             Soil_moisture: {sensor_data.get('soil_moisture')}
             pH: {sensor_data.get('ph')}
-            Time: {sensor_data.get('timestamp')}
+            Time: {sensor_data.get(timezone.now())}
         """,
-        from_email='bostonchamps96@gmail.com',
+        from_email=settings.EMAIL_HOST_USER,
         recipient_list=[user.email],
         fail_silently=False
     )
 
-def send_alert_sms(sensor_data,user):
+def send_alert_sms(sensor_data, user):
+    phone = getattr(user.userprofile, "phone", None)
+    if not phone:
+        return
+
     client = Client(
         settings.TWILIO_ACCOUNT_SID,
         settings.TWILIO_AUTH_TOKEN
     )
 
     client.messages.create(
-        body=f"""ALERT! 
-        Temp:{sensor_data.get('temperature')} 
-        Humidity: {sensor_data.get('humidity')} 
-        Soil_moisture:{sensor_data.get('soil_moisture')} 
-        pH:{sensor_data.get('ph')} 
-        Time:{sensor_data.get('timestamp')}""",
+        body=(
+            f"ALERT! "
+            f"Temp:{sensor_data.get('temperature')} "
+            f"Soil:{sensor_data.get('soil_moisture')} "
+            f"pH:{sensor_data.get('ph')}"
+        ),
         from_=settings.TWILIO_PHONE_NUMBER,
-        to='+91'+user.userprofile.phone
+        to=phone if phone.startswith("+") else "+91" + phone
     )
 
 @csrf_exempt
@@ -96,12 +101,12 @@ def sensor_data_api(request):
                 alert=data.get('alert')
             )
             if data.get('alert'):
-                user = device.owner
                 try:
+                    user = device.owner
                     send_alert_email(data,user)
                     send_alert_sms(data,user)
                 except Exception as e:
-                    return JsonResponse({"status": "error", "message": str(e)},status=400)
+                    print("Alert failed:", e)
             return JsonResponse({"status": "success"}, status=200)
 
         except Exception as e:
