@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .forms import CustomUserCreationForm,EmailOrUsernameLoginForm
+import threading
 
 def register_view(request):
     if request.method == "POST":
@@ -83,6 +84,13 @@ def send_alert_sms(sensor_data, user):
         to=phone if phone.startswith("+") else "+91" + phone
     )
 
+def send_alerts_async(sensor_data, user):
+    try:
+        send_alert_email(sensor_data, user)
+        send_alert_sms(sensor_data, user)
+    except Exception as e:
+        print("Async alert failed:", e)
+        
 @csrf_exempt
 def sensor_data_api(request):
 
@@ -101,12 +109,11 @@ def sensor_data_api(request):
                 alert=data.get('alert')
             )
             if data.get('alert'):
-                try:
-                    user = device.owner
-                    send_alert_email(data,user)
-                    send_alert_sms(data,user)
-                except Exception as e:
-                    print("Alert failed:", e)
+                threading.Thread(
+                    target=send_alerts_async,
+                    args=(data, device.owner),
+                    daemon=True
+                ).start()
             return JsonResponse({"status": "success"}, status=200)
 
         except Exception as e:
