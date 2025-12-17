@@ -18,8 +18,8 @@ local_settings.py
 # -------------------------
 # Database files (DO NOT TRACK)
 # -------------------------
-#db.sqlite3
-#*.sqlite3
+db.sqlite3
+*.sqlite3
 
 # -------------------------
 # Django cache

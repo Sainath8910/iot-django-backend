@@ -46,7 +46,6 @@ def logout_view(request):
     return redirect('login')
 
 def send_alert_email(sensor_data,user):
-    print("Sending Email...")
     send_mail(
         subject="🚨 IoT ALERT DETECTED",
         message=f"""
@@ -85,7 +84,6 @@ def sensor_data_api(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body.decode("utf-8"))
-            print(data)
             device_id = data.get("device_id")
             if not device_id:
                 return JsonResponse({"error": "device_id is required"}, status=400)
@@ -103,7 +101,7 @@ def sensor_data_api(request):
                     send_alert_email(data,user)
                     send_alert_sms(data,user)
                 except Exception as e:
-                    print(f"Error sending alerts: {e}")
+                    return JsonResponse({"status": "error", "message": str(e)},status=400)
             return JsonResponse({"status": "success"}, status=200)
 
         except Exception as e:
