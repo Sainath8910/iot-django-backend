@@ -2,39 +2,81 @@ from django.shortcuts import render
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import SensorReading
+from .models import SensorReading,UserProfile,Device
 from django.core.mail import send_mail
 from twilio.rest import Client
 from django.conf import settings
+from django.contrib.auth import login, logout
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .forms import CustomUserCreationForm,EmailOrUsernameLoginForm
 
+def register_view(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.email = form.cleaned_data['email']
+            user.save()
 
-def send_alert_email(sensor_data):
+            UserProfile.objects.create(
+                user=user,
+                phone=form.cleaned_data['phone']
+            )
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'auth/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == "POST":
+        form = EmailOrUsernameLoginForm(request, data=request.POST)
+        if form.is_valid():
+            login(request, form.get_user())
+            return redirect('dashboard')
+    else:
+        form = EmailOrUsernameLoginForm()
+
+    return render(request, 'auth/login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+def send_alert_email(sensor_data,user):
+    print("Sending Email...")
     send_mail(
         subject="🚨 IoT ALERT DETECTED",
         message=f"""
-Alert detected!
-
-Temperature: {sensor_data.temperature}
-Humidity: {sensor_data.humidity}
-Soil: {sensor_data.soil}
-pH: {sensor_data.ph}
-Time: {sensor_data.timestamp}
+            Alert detected!
+            Temperature: {sensor_data.get('temperature')}
+            Humidity: {sensor_data.get('humidity')}
+            Soil_moisture: {sensor_data.get('soil_moisture')}
+            pH: {sensor_data.get('ph')}
+            Time: {sensor_data.get('timestamp')}
         """,
-        from_email='your_email@gmail.com',
-        recipient_list=['admin@gmail.com'],
+        from_email='bostonchamps96@gmail.com',
+        recipient_list=[user.email],
         fail_silently=False
     )
 
-def send_alert_sms(sensor_data):
+def send_alert_sms(sensor_data,user):
     client = Client(
         settings.TWILIO_ACCOUNT_SID,
         settings.TWILIO_AUTH_TOKEN
     )
 
     client.messages.create(
-        body=f"ALERT! Temp:{sensor_data.temperature} Soil:{sensor_data.soil} pH:{sensor_data.ph}",
+        body=f"""ALERT! 
+        Temp:{sensor_data.get('temperature')} 
+        Humidity: {sensor_data.get('humidity')} 
+        Soil_moisture:{sensor_data.get('soil_moisture')} 
+        pH:{sensor_data.get('ph')} 
+        Time:{sensor_data.get('timestamp')}""",
         from_=settings.TWILIO_PHONE_NUMBER,
-        to='+919490290489'
+        to='+91'+user.userprofile.phone
     )
 
 @csrf_exempt
@@ -42,8 +84,12 @@ def sensor_data_api(request):
 
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-
+            data = json.loads(request.body.decode("utf-8"))
+            print(data)
+            device_id = data.get("device_id")
+            if not device_id:
+                return JsonResponse({"error": "device_id is required"}, status=400)
+            device = Device.objects.select_related("owner").get(device_id=device_id)
             SensorReading.objects.create(
                 temperature=data.get('temperature'),
                 humidity=data.get('humidity'),
@@ -51,9 +97,13 @@ def sensor_data_api(request):
                 ph=data.get('ph'),
                 alert=data.get('alert')
             )
-            if data.alert:
-                send_alert_email(data)
-                send_alert_sms(data)
+            if data.get('alert'):
+                user = device.owner
+                try:
+                    send_alert_email(data,user)
+                    send_alert_sms(data,user)
+                except Exception as e:
+                    print(f"Error sending alerts: {e}")
             return JsonResponse({"status": "success"}, status=200)
 
         except Exception as e:
@@ -64,10 +114,9 @@ def sensor_data_api(request):
 
     # 👇 THIS LINE IS CRITICAL
     return JsonResponse(
-        {"error": "Only POST method allowed"},
-        status=405
-    )
+        {"error": "Only POST method allowed"},status=405)
 
+@login_required(login_url='login')
 def dashboard(request):
     readings = SensorReading.objects.order_by('-created_at')[:20]
     return render(request, 'dashboard.html', {'readings': readings})

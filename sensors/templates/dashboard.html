@@ -63,11 +63,55 @@ tailwind.config = {
 <main class="flex-1 flex flex-col">
 
 <header class="h-20 border-b border-border-dark bg-background-dark flex items-center justify-between px-6">
+
+  <!-- Left -->
   <div>
     <h1 class="text-xl font-bold">Live Monitoring</h1>
     <p class="text-sm text-text-secondary">Greenhouse Unit A-42</p>
   </div>
+
+  <!-- Right: Profile Dropdown -->
+  <div class="relative">
+    <!-- Avatar Button -->
+    <button
+      id="profileBtn"
+      class="w-10 h-10 rounded-full bg-primary/20 border border-primary/30
+             flex items-center justify-center text-primary
+             hover:bg-primary/30 transition"
+    >
+      <span class="material-symbols-outlined">person</span>
+    </button>
+
+    <!-- Dropdown -->
+    <div
+      id="profileMenu"
+      class="hidden absolute right-0 mt-3 w-44
+             bg-card-dark border border-border-dark
+             rounded-xl shadow-lg overflow-hidden z-50"
+    >
+      <!-- Profile -->
+      <a href="#"
+         class="flex items-center gap-3 px-4 py-3 text-sm
+                hover:bg-white/5 transition">
+        <span class="material-symbols-outlined text-base">account_circle</span>
+        Profile
+      </a>
+
+      <!-- Divider -->
+      <div class="h-px bg-border-dark"></div>
+
+      <!-- Logout -->
+      <a href="{% url 'logout' %}"
+         class="flex items-center gap-3 px-4 py-3 text-sm text-red-400
+                hover:bg-red-500/10 transition">
+        <span class="material-symbols-outlined text-base">logout</span>
+        Logout
+      </a>
+    </div>
+  </div>
+
 </header>
+
 
 <div class="flex-1 overflow-y-auto p-6 space-y-8">
 
@@ -132,7 +176,17 @@ tailwind.config = {
 <!-- ================= SCRIPT ================= -->
 <script>
 let tempChart, humidChart, soilChart, phChart;
+const profileBtn = document.getElementById("profileBtn");
+const profileMenu = document.getElementById("profileMenu");
 
+profileBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  profileMenu.classList.toggle("hidden");
+});
+
+document.addEventListener("click", () => {
+  profileMenu.classList.add("hidden");
+});
 function createChart(id) {
   return new Chart(document.getElementById(id), {
     type: 'line',

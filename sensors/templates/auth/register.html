@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Register - Sensor Data App</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<!-- Tailwind Config -->
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#49e619",
+        "background-light": "#f6f8f6",
+        "background-dark": "#152111",
+        "surface-dark": "#1c2a18",
+      },
+      fontFamily: {
+        display: ["Manrope", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "1rem",
+        lg: "2rem",
+        xl: "3rem",
+        full: "9999px"
+      },
+    },
+  },
+}
+</script>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col">
+
+<!-- Navbar -->
+<header class="w-full border-b border-gray-200 dark:border-[#2c4724]">
+  <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-4 cursor-pointer">
+      <span class="material-symbols-outlined text-3xl text-primary">sensors</span>
+      <h2 class="text-lg font-bold">Sensor Data App</h2>
+    </div>
+    <a href="{% url 'login' %}"
+       class="rounded-full h-10 px-6 bg-slate-100 dark:bg-[#2c4724] flex items-center text-sm font-bold hover:opacity-80">
+      Login
+    </a>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="flex-grow flex items-center justify-center p-4 py-12">
+<div class="w-full max-w-[640px] flex flex-col gap-8">
+
+<!-- Heading -->
+<div class="text-center">
+  <h1 class="text-4xl font-black">Register</h1>
+  <p class="text-slate-500 dark:text-[#9fc893]">
+    Create your account to access sensor analytics.
+  </p>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+  {% for message in messages %}
+    <p class="mb-4 text-sm text-red-500 text-center">{{ message }}</p>
+  {% endfor %}
+{% endif %}
+
+<!-- Form -->
+<div class="bg-white dark:bg-[#20321a] p-6 md:p-10 rounded-xl border border-gray-200 dark:border-[#3f6534] shadow-sm">
+<form method="POST" action="{% url 'register' %}">
+{% csrf_token %}
+{% if form.errors %}
+  <div class="mb-4 text-sm text-red-500">
+    {% for field in form %}
+      {% for error in field.errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+<!-- Username -->
+<div class="flex flex-col gap-2 mb-6">
+  <label class="font-medium">Username</label>
+  <div class="relative">
+    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">person</span>
+    <input name="username" autocomplete="username" required
+      class="form-input w-full h-14 rounded-full pl-12 bg-slate-50 dark:bg-[#1a2b15]"
+      placeholder="Enter your username"/>
+  </div>
+  <p class="text-xs text-slate-500 px-4">
+    Letters, digits and @/./+/-/_ only.
+  </p>
+</div>
+
+<!-- Names -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <input name="first_name" placeholder="First name"
+    class="form-input h-14 rounded-full px-5 bg-slate-50 dark:bg-[#1a2b15]" required/>
+  <input name="last_name" placeholder="Last name"
+    class="form-input h-14 rounded-full px-5 bg-slate-50 dark:bg-[#1a2b15]" required/>
+</div>
+
+<!-- Contact -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="relative">
+    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+    <input name="email" autocomplete="email" type="email" required
+      class="form-input h-14 rounded-full pl-12 bg-slate-50 dark:bg-[#1a2b15]"
+      placeholder="Email" required/>
+  </div>
+  <div class="relative">
+    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">call</span>
+    <input name="phone"
+      class="form-input h-14 rounded-full pl-12 bg-slate-50 dark:bg-[#1a2b15]"
+      placeholder="Phone" autocomplete="tel" required/>
+  </div>
+</div>
+
+<!-- Password -->
+<div class="grid grid-cols-1 gap-6 mb-8">
+  <input name="password1" type="password" required
+    class="form-input h-14 rounded-full px-5 bg-slate-50 dark:bg-[#1a2b15]"
+    placeholder="Password"/>
+  <input name="password2" type="password" required
+    class="form-input h-14 rounded-full px-5 bg-slate-50 dark:bg-[#1a2b15]"
+    placeholder="Confirm password"/>
+</div>
+
+<!-- Submit -->
+<button type="submit"
+  class="w-full h-14 bg-primary hover:bg-[#3cd015] text-background-dark text-lg font-bold rounded-full flex items-center justify-center gap-2">
+  Register
+  <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+
+</form>
+
+<!-- Footer -->
+<p class="text-center text-sm text-slate-500 dark:text-[#9fc893] mt-6">
+  Already have an account?
+  <a href="{% url 'login' %}" class="font-bold text-primary hover:underline">
+    Login
+  </a>
+</p>
+
+</div>
+</div>
+</main>
+
+</body>
+</html>
