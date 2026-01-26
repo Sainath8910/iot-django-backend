@@ -152,16 +152,23 @@ tailwind.config = {
 
 </div>
 
+<div id="aiBanner" class="hidden bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 font-semibold">
+  ⚠ AI ALERT: Crop is under severe risk
+</div>
 <!-- ================= TABLE ================= -->
 <div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
 <table class="w-full text-center">
 <thead class="bg-[#1e3419]">
-<tr>
-  <th class="p-4 text-xs text-text-secondary">Time</th>
+<tr><!--
   <th class="p-4 text-xs text-text-secondary">Temp</th>
   <th class="p-4 text-xs text-text-secondary">Humidity</th>
-  <th class="p-4 text-xs text-text-secondary">Soil</th>
-  <th class="p-4 text-xs text-text-secondary">pH</th>
+  <th class="p-4 text-xs text-text-secondary">Soil Moisture</th>
+  <th class="p-4 text-xs text-text-secondary">pH</th>-->
+  <th class="p-4 text-xs text-text-secondary">Time</th>
+  <th class="p-4 text-xs text-text-secondary">Image</th>
+  <th class="p-4 text-xs text-text-secondary">Disease</th>
+  <th class="p-4 text-xs text-text-secondary">Stress</th>
+  <th class="p-4 text-xs text-text-secondary">AI Decision</th>
   <th class="p-4 text-xs text-text-secondary">Status</th>
 </tr>
 </thead>
@@ -176,8 +183,10 @@ tailwind.config = {
 <!-- ================= SCRIPT ================= -->
 <script>
 let tempChart, humidChart, soilChart, phChart;
+
 const profileBtn = document.getElementById("profileBtn");
 const profileMenu = document.getElementById("profileMenu");
+const aiBanner = document.getElementById("aiBanner");
 
 profileBtn.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -187,10 +196,14 @@ profileBtn.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   profileMenu.classList.add("hidden");
 });
+
 function createChart(id) {
   return new Chart(document.getElementById(id), {
-    type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderWidth: 2, tension: 0.4 }] },
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{ data: [], borderWidth: 2, tension: 0.4 }]
+    },
     options: {
       plugins: { legend: { display: false } },
       scales: { x: { display: false }, y: { display: false } }
@@ -207,7 +220,9 @@ function updateDashboard() {
   fetch("/latest/")
     .then(res => res.json())
     .then(data => {
-      let labels=[], t=[], h=[], s=[], p=[], rows="";
+      if (!data.length) return;
+
+      let labels = [], t = [], h = [], s = [], p = [], rows = "";
 
       data.forEach(r => {
         labels.push(r.time);
@@ -219,15 +234,28 @@ function updateDashboard() {
         rows += `
         <tr class="hover:bg-white/5">
           <td class="p-4">${r.time}</td>
-          <td class="p-4">${r.temperature}°C</td>
-          <td class="p-4">${r.humidity}%</td>
-          <td class="p-4 ${r.alert ? 'text-red-400 font-bold':''}">${r.soil}%</td>
-          <td class="p-4">${r.ph}</td>
+
+          <td class="p-4">
+            <img src="${r.image}" class="w-12 h-12 rounded-lg object-cover border border-border-dark"/>
+          </td>
+          
+          <td class="p-4 font-semibold ${r.disease !== "Healthy" ? "text-red-400" : "text-primary"}">
+            ${r.disease}
+          </td>
+
+          <td class="p-4 font-semibold ${r.stress === "High" ? "text-red-400" : "text-primary"}">
+            ${r.stress}
+          </td>
+
+          <td class="p-4 text-xs text-text-secondary max-w-xs truncate" title="${r.decision}">
+            ${r.decision}
+          </td>
+
           <td class="p-4">
             <span class="px-3 py-1 rounded-full text-xs font-bold ${
-              r.alert ? 'bg-red-500/20 text-red-500' : 'bg-primary/20 text-primary'
+              r.alert ? "bg-red-500/20 text-red-500" : "bg-primary/20 text-primary"
             }">
-              ${r.alert ? 'ALERT' : 'NORMAL'}
+              ${r.alert ? "ALERT" : "NORMAL"}
             </span>
           </td>
         </tr>`;
@@ -236,10 +264,18 @@ function updateDashboard() {
       tableBody.innerHTML = rows;
 
       const last = data[data.length - 1];
+
       tempValue.textContent = last.temperature + "°C";
       humidValue.textContent = last.humidity + "%";
       soilValue.textContent = last.soil + "%";
       phValue.textContent = last.ph;
+
+      if (last.alert) {
+        aiBanner.classList.remove("hidden");
+        aiBanner.textContent = "⚠ " + last.decision;
+      } else {
+        aiBanner.classList.add("hidden");
+      }
 
       [tempChart, humidChart, soilChart, phChart].forEach((c, i) => {
         c.data.labels = labels;
@@ -252,6 +288,3 @@ function updateDashboard() {
 setInterval(updateDashboard, 5000);
 updateDashboard();
 </script>
-
-</body>
-</html>
