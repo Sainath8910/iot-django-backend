@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+<title>AgriPulse AI – Crop Health</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+<style>
+body { font-family: Manrope, sans-serif; }
+</style>
+</head>
+
+<body class="bg-[#152111] text-white p-6">
+
+<!-- Back Button -->
+<button onclick="window.location='/'"
+        class="mb-6 bg-[#49e619] text-black px-4 py-2 rounded-lg font-bold">
+← Back to Dashboard
+</button>
+
+<!-- SENSOR BAR -->
+<div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Temperature</p>
+    <p id="tempValue" class="text-xl font-bold"></p>
+  </div>
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Humidity</p>
+    <p id="humidityValue" class="text-xl font-bold"></p>
+  </div>
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Soil Moisture</p>
+    <p id="moistureValue" class="text-xl font-bold"></p>
+  </div>
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Soil pH</p>
+    <p id="phValue" class="text-xl font-bold"></p>
+  </div>
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Device</p>
+    <p id="deviceId" class="text-[#49e619] font-bold"></p>
+  </div>
+  <div class="bg-white/5 p-4 rounded-xl text-center">
+    <p class="text-white/40 text-xs">Time</p>
+    <p id="caseTime" class="text-sm"></p>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+<!-- LEFT PANEL -->
+<div class="bg-white/5 p-6 rounded-xl space-y-4">
+  <div id="leafImage" class="aspect-square max-h-[350px] bg-cover bg-center rounded-lg mx-auto"></div>
+
+  <div class="space-y-3 mt-4">
+
+  <div class="bg-white/5 p-3 rounded-lg">
+    <p class="text-white/40 text-xs">Stress Level</p>
+    <p id="stressValue" class="text-xl font-bold"></p>
+  </div>
+
+  <div class="bg-white/5 p-3 rounded-lg">
+    <p class="text-white/40 text-xs">Captured At</p>
+    <p id="caseTime2" class="text-sm"></p>
+  </div>
+
+</div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="bg-white/5 p-6 rounded-xl space-y-5">
+
+<h2 id="cropName" class="text-[#49e619] uppercase text-sm"></h2>
+<h1 id="diseaseName" class="text-3xl font-black"></h1>
+
+<div>
+  <p class="text-white/40 text-xs uppercase">Why it happened</p>
+  <p id="aiReason" class="mt-1"></p>
+</div>
+
+<div>
+  <p class="text-white/40 text-xs uppercase">What to do</p>
+  <ul id="aiTreatment" class="list-disc list-inside mt-1"></ul>
+</div>
+
+<div class="space-y-4 pt-4">
+
+  <div class="bg-[#49e619]/10 p-4 rounded">
+    <p class="text-xs uppercase text-[#49e619]">Recommended Fertilizer</p>
+    <p id="fertilizerName" class="font-bold mt-1"></p>
+  </div>
+
+  <div class="bg-[#49e619]/10 p-4 rounded">
+    <p class="text-xs uppercase text-[#49e619]">Recommended Spray</p>
+    <p id="sprayName" class="font-bold mt-1"></p>
+  </div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+const id = new URLSearchParams(window.location.search).get("reading");
+
+fetch(`/case/${id}/`)
+.then(res => res.json())
+.then(d => {
+
+  document.getElementById("leafImage").style.backgroundImage = `url('${d.image}')`;
+
+  document.getElementById("cropName").textContent = d.crop;
+  document.getElementById("diseaseName").textContent = d.disease;
+
+  document.getElementById("tempValue").textContent = d.temperature + "°C";
+  document.getElementById("humidityValue").textContent = d.humidity + "%";
+  document.getElementById("moistureValue").textContent = d.soil_moisture + "%";
+  document.getElementById("phValue").textContent = d.ph;
+  document.getElementById("deviceId").textContent = d.device;
+
+  document.getElementById("caseTime").textContent = d.time;
+  document.getElementById("caseTime2").textContent = d.time;
+
+  document.getElementById("stressValue").textContent = d.stress;
+  document.getElementById("aiReason").textContent = d.recommendation.reason;
+
+  const list = document.getElementById("aiTreatment");
+  list.innerHTML = "";
+  d.recommendation.treatment.split(".").forEach(t => {
+    if (t.trim()) list.innerHTML += `<li>${t}</li>`;
+  });
+
+  document.getElementById("fertilizerName").textContent = d.recommendation.fertilizer;
+  document.getElementById("sprayName").textContent = d.recommendation.spray;
+});
+</script>
+
+</body>
+</html>

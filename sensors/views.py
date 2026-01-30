@@ -2,7 +2,7 @@ from django.shortcuts import render
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import SensorReading,UserProfile,Device
+from .models import SensorReading,UserProfile,Device,CropRecommendation
 from django.core.mail import send_mail
 from twilio.rest import Client
 from django.conf import settings
@@ -134,7 +134,7 @@ def sensor_data_api(request):
                 f.write(chunk)
 
         # === AI FUSION ===
-        disease, confidence = predict_disease(temp_path)
+        disease, confidence, crop = predict_disease(temp_path)
         print(disease, confidence)
 
         stress = predict_stress(
@@ -147,7 +147,8 @@ def sensor_data_api(request):
 
         decision = agrotech_decision(disease, confidence, stress)
 
-        alert_required = (disease != "Healthy" or stress == "High")
+        is_healthy = "healthy" in disease.lower()
+        alert_required = (not is_healthy or stress == "High")
 
         # Store in DB
         reading = SensorReading.objects.create(
@@ -161,7 +162,8 @@ def sensor_data_api(request):
             disease=disease,
             stress_level=stress,
             decision=decision,
-            alert=alert_required
+            alert=alert_required,
+            crop=crop
         )
 
         # Send alerts
@@ -204,7 +206,8 @@ def latest_readings(request):
     data = []
     for r in readings:
         data.append({
-            "time": r.sensor_timestamp.strftime("%H:%M"),
+            "id": r.id,
+            "time": r.sensor_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "temperature": r.temperature,
             "humidity": r.humidity,
             "soil": r.soil_moisture,
@@ -215,7 +218,61 @@ def latest_readings(request):
             "disease": r.disease,
             "stress": r.stress_level,
             "decision": r.decision,
-            "image": r.image.url if r.image else ""
+            "image": r.image.url if r.image else "",
+            "device": r.device.device_id
         })
 
     return JsonResponse(data, safe=False)
+
+def analysis_page(request):
+    return render(request, "recomendations.html")
+
+def get_case(request, reading_id):
+    try:
+        r = SensorReading.objects.select_related("device").get(id=reading_id)
+
+        rec = CropRecommendation.objects.filter(
+            crop=r.crop,
+            disease=r.disease,
+            stress_level=r.stress_level
+        ).first()
+        if not rec:
+            rec = CropRecommendation.objects.filter(
+                crop="Any",
+                disease="Healthy",
+                stress_level=r.stress_level
+            ).first()
+        if not rec:
+            rec = CropRecommendation.objects.filter(
+                disease=r.disease,
+                stress_level="Any"
+            ).first()
+
+        return JsonResponse({
+            "id": r.id,
+            "crop": r.crop,
+            "device": r.device.device_id,
+            "time": r.sensor_timestamp.strftime("%Y-%m-%d %H:%M"),
+            "image": r.image.url if r.image else "",
+            "disease": r.disease,
+            "confidence": getattr(r, "confidence", 0.0),
+            "stress": r.stress_level,
+            "stress_score": 90 if r.stress_level == "High" else 40 if r.stress_level == "Moderate" else 10,
+            "decision": r.decision,
+            "temperature": r.temperature,
+            "humidity": r.humidity,
+            "soil_moisture": r.soil_moisture,
+            "ph": r.ph,
+
+            "recommendation": {
+                "condition": rec.condition if rec else "",
+                "reason": rec.reason if rec else "",
+                "treatment": rec.treatment if rec else "",
+                "fertilizer": rec.fertilizer if rec else "",
+                "spray": rec.spray if rec else "",
+                "severity": rec.severity if rec else ""
+            }
+        })
+
+    except SensorReading.DoesNotExist:
+        return JsonResponse({"error": "Case not found"}, status=404)

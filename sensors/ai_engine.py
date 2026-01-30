@@ -37,8 +37,9 @@ def predict_disease(img_path):
     class_id = int(np.argmax(preds))
     disease = class_map[class_id]
     confidence = float(np.max(preds))
-
-    return disease, confidence
+    crop, disease = disease.split("_", 1)
+    disease = class_map[class_id]
+    return disease, confidence, crop
 def normalize_crop(crop):
     return str(crop).strip().title()
 
@@ -60,11 +61,12 @@ def predict_stress(crop, temp, humidity, moisture, ph):
 
     return stress
 def agrotech_decision(disease, confidence, stress):
-    if disease != "Healthy" and stress == "High":
-        return "CRITICAL: Disease will spread. Immediate treatment required."
-    elif disease != "Healthy":
+    is_healthy = "healthy" in disease.lower()
+    if not is_healthy and stress == "High":
+        return "CRITICAL: Disease detected and plant under severe stress. Immediate treatment required."
+    elif not is_healthy:
         return "WARNING: Disease detected. Monitor and apply treatment."
     elif stress == "High":
-        return "PREVENTIVE: Crop under stress. Check irrigation and nutrients."
+        return "PREVENTIVE: Plant under high stress. Check irrigation and nutrients."
     else:
         return "Healthy. No action required."

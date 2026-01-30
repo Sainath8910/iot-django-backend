@@ -165,10 +165,10 @@ tailwind.config = {
   <th class="p-4 text-xs text-text-secondary">Soil Moisture</th>
   <th class="p-4 text-xs text-text-secondary">pH</th>-->
   <th class="p-4 text-xs text-text-secondary">Time</th>
+  <th class="p-4 text-xs text-text-secondary">Device</th>
   <th class="p-4 text-xs text-text-secondary">Image</th>
   <th class="p-4 text-xs text-text-secondary">Disease</th>
   <th class="p-4 text-xs text-text-secondary">Stress</th>
-  <th class="p-4 text-xs text-text-secondary">AI Decision</th>
   <th class="p-4 text-xs text-text-secondary">Status</th>
 </tr>
 </thead>
@@ -215,7 +215,9 @@ tempChart = createChart("tempChart");
 humidChart = createChart("humidChart");
 soilChart = createChart("soilChart");
 phChart = createChart("phChart");
-
+function openCase(id) {
+  window.location = `/analysis/?reading=${id}`;
+}
 function updateDashboard() {
   fetch("/latest/")
     .then(res => res.json())
@@ -232,23 +234,26 @@ function updateDashboard() {
         p.push(r.ph);
 
         rows += `
-        <tr class="hover:bg-white/5">
+        <tr class="hover:bg-white/5 cursor-pointer" onclick="openCase(${r.id})">
           <td class="p-4">${r.time}</td>
 
-          <td class="p-4">
-            <img src="${r.image}" class="w-12 h-12 rounded-lg object-cover border border-border-dark"/>
+          <td class="p-4 text-xs text-text-secondary max-w-xs truncate" title="${r.decision}">
+            ${r.device}
+          </td>
+
+          <td class="p-4 text-center">
+            <div class="flex justify-center items-center">
+              <img src="${r.image}"
+                  class="w-12 h-12 rounded-lg object-cover border border-border-dark"/>
+            </div>
           </td>
           
-          <td class="p-4 font-semibold ${r.disease !== "Healthy" ? "text-red-400" : "text-primary"}">
+          <td class="p-4 font-semibold ${r.disease.toLowerCase().includes("healthy") ? "text-primary" : "text-red-400"}">
             ${r.disease}
           </td>
 
           <td class="p-4 font-semibold ${r.stress === "High" ? "text-red-400" : "text-primary"}">
             ${r.stress}
-          </td>
-
-          <td class="p-4 text-xs text-text-secondary max-w-xs truncate" title="${r.decision}">
-            ${r.decision}
           </td>
 
           <td class="p-4">
