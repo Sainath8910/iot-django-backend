@@ -54,11 +54,16 @@ def send_alert_email(sensor_data,user):
         subject="🚨 IoT ALERT DETECTED",
         message=f"""
             Alert detected!
+            Crop: {sensor_data.get('crop')}
             Temperature: {sensor_data.get('temperature')}
             Humidity: {sensor_data.get('humidity')}
             Soil_moisture: {sensor_data.get('soil_moisture')}
             pH: {sensor_data.get('ph')}
-            Time: {sensor_data.get(timezone.now())}
+            Time: {sensor_data.get("timestamp")}
+            Disease: {sensor_data.get("disease")} 
+            Confidence: {sensor_data.get("confidence"):.2f}
+            Stress Level: {sensor_data.get("stress")}
+            Decision: {sensor_data.get("decision")}
         """,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[user.email],
@@ -78,9 +83,15 @@ def send_alert_sms(sensor_data, user):
     client.messages.create(
         body=(
             f"ALERT! "
+            f"Crop:{sensor_data.get('crop')} "
             f"Temp:{sensor_data.get('temperature')} "
             f"Soil:{sensor_data.get('soil_moisture')} "
             f"pH:{sensor_data.get('ph')}"
+            f"Time:{sensor_data.get('timestamp')}"
+            f"Disease:{sensor_data.get('disease')} "
+            f"Stress:{sensor_data.get('stress')} "
+            f"Confidence:{sensor_data.get('confidence')} "
+            f"Decision:{sensor_data.get('decision')} "
         ),
         from_=settings.TWILIO_PHONE_NUMBER,
         to=phone if phone.startswith("+") else "+91" + phone
@@ -89,9 +100,10 @@ def send_alert_sms(sensor_data, user):
 def send_alerts_async(sensor_data, user):
     try:
         print("Async alert started")
-        #send_alert_email(sensor_data, user)
+        send_alert_email(sensor_data, user)
         print("Email sent")
         #send_alert_sms(sensor_data, user)
+        print("SMS sent")
     except Exception as e:
         print("Async alert failed:", e)
 
@@ -113,7 +125,6 @@ def sensor_data_api(request):
         device = Device.objects.select_related("owner").get(device_id=device_id)
 
         # Sensor values
-        crop = data.get("crop")
         temperature = float(data.get("temperature", 0))
         humidity = float(data.get("humidity", 0))
         soil_moisture = int(data.get("soil_moisture", 0))
@@ -172,6 +183,10 @@ def sensor_data_api(request):
                 target=send_alerts_async,
                 args=({
                     "crop": crop,
+                    "temperature": temperature,
+                    "humidity": humidity,
+                    "soil_moisture": soil_moisture,
+                    "ph": ph,
                     "disease": disease,
                     "confidence": confidence,
                     "stress": stress,

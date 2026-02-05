@@ -1,116 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Monitoring Dashboard</title>
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        primary: "#49e619",
-        "background-dark": "#152111",
-        "card-dark": "#1a2c15",
-        "border-dark": "#2c4724",
-        "text-secondary": "#9fc893"
-      },
-      fontFamily: {
-        display: ["Manrope"],
-        body: ["Noto Sans"]
-      }
-    }
-  }
-}
-</script>
-
-<style>
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-thumb { background: #2c4724; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #49e619; }
-</style>
-</head>
 
 <body class="bg-background-dark text-white font-display overflow-hidden">
 
 <div class="flex h-screen">
 
-<!-- ================= SIDEBAR ================= -->
-<aside class="w-20 lg:w-64 bg-background-dark border-r border-border-dark flex flex-col">
-  <div class="h-20 flex items-center justify-center lg:px-6 border-b border-border-dark">
-    <div class="flex items-center gap-3">
-      <div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined">eco</span>
-      </div>
-      <span class="hidden lg:block font-bold">Smart Agrotech</span>
-    </div>
-  </div>
-</aside>
-
 <!-- ================= MAIN ================= -->
 <main class="flex-1 flex flex-col">
-
-<header class="h-20 border-b border-border-dark bg-background-dark flex items-center justify-between px-6">
-
-  <!-- Left -->
-  <div>
-    <h1 class="text-xl font-bold">Live Monitoring</h1>
-    <p class="text-sm text-text-secondary">Greenhouse Unit A-42</p>
-  </div>
-
-  <!-- Right: Profile Dropdown -->
-  <div class="relative">
-    <!-- Avatar Button -->
-    <button
-      id="profileBtn"
-      class="w-10 h-10 rounded-full bg-primary/20 border border-primary/30
-             flex items-center justify-center text-primary
-             hover:bg-primary/30 transition"
-    >
-      <span class="material-symbols-outlined">person</span>
-    </button>
-
-    <!-- Dropdown -->
-    <div
-      id="profileMenu"
-      class="hidden absolute right-0 mt-3 w-44
-             bg-card-dark border border-border-dark
-             rounded-xl shadow-lg overflow-hidden z-50"
-    >
-      <!-- Profile -->
-      <a href="#"
-         class="flex items-center gap-3 px-4 py-3 text-sm
-                hover:bg-white/5 transition">
-        <span class="material-symbols-outlined text-base">account_circle</span>
-        Profile
-      </a>
-
-      <!-- Divider -->
-      <div class="h-px bg-border-dark"></div>
-
-      <!-- Logout -->
-      <a href="{% url 'logout' %}"
-         class="flex items-center gap-3 px-4 py-3 text-sm text-red-400
-                hover:bg-red-500/10 transition">
-        <span class="material-symbols-outlined text-base">logout</span>
-        Logout
-      </a>
-    </div>
-  </div>
-
-</header>
 
 
 <div class="flex-1 overflow-y-auto p-6 space-y-8">
@@ -159,11 +57,7 @@ tailwind.config = {
 <div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
 <table class="w-full text-center">
 <thead class="bg-[#1e3419]">
-<tr><!--
-  <th class="p-4 text-xs text-text-secondary">Temp</th>
-  <th class="p-4 text-xs text-text-secondary">Humidity</th>
-  <th class="p-4 text-xs text-text-secondary">Soil Moisture</th>
-  <th class="p-4 text-xs text-text-secondary">pH</th>-->
+<tr>
   <th class="p-4 text-xs text-text-secondary">Time</th>
   <th class="p-4 text-xs text-text-secondary">Device</th>
   <th class="p-4 text-xs text-text-secondary">Image</th>
@@ -293,3 +187,4 @@ function updateDashboard() {
 setInterval(updateDashboard, 5000);
 updateDashboard();
 </script>
+{% endblock %}
