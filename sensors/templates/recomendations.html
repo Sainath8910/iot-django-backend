@@ -1,109 +1,206 @@
 <!DOCTYPE html>
 <html class="dark">
 <head>
-<title>AgriPulse AI – Crop Health</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgriPulse AI – Crop Recommendation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 
-<style>
-body { font-family: Manrope, sans-serif; }
-</style>
+  <style>
+    body { font-family: Manrope, sans-serif; }
+  </style>
 </head>
 
-<body class="bg-[#152111] text-white p-6">
+<body class="bg-[#152111] text-white">
 
-<!-- Back Button -->
-<button onclick="window.location='/'"
-        class="mb-6 bg-[#49e619] text-black px-4 py-2 rounded-lg font-bold">
-← Back to Dashboard
-</button>
+<div class="max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
 
-<!-- SENSOR BAR -->
-<div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Temperature</p>
-    <p id="tempValue" class="text-xl font-bold"></p>
+  <!-- TOP BAR -->
+  <div class="flex justify-between items-center">
+    <button onclick="window.history.back()"
+      class="flex items-center gap-2 bg-[#49e619] text-black px-4 py-2 rounded-full font-bold">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back
+    </button>
+
+    <h1 class="text-sm font-bold tracking-wider text-[#49e619]">
+      AI CROP HEALTH REPORT
+    </h1>
   </div>
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Humidity</p>
-    <p id="humidityValue" class="text-xl font-bold"></p>
+
+  <!-- SENSOR SUMMARY -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">thermostat</span>
+      <p>Temperature</p>
+      <h3 id="tempValue"></h3>
+    </div>
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">humidity_high</span>
+      <p>Humidity</p>
+      <h3 id="humidityValue"></h3>
+    </div>
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">potted_plant</span>
+      <p>Soil Moisture</p>
+      <h3 id="moistureValue"></h3>
+    </div>
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">science</span>
+      <p>pH Level</p>
+      <h3 id="phValue"></h3>
+    </div>
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">devices</span>
+      <p>Device</p>
+      <h3 id="deviceId" class="text-[#49e619]"></h3>
+    </div>
+
+    <div class="sensor-card">
+      <span class="material-symbols-outlined">schedule</span>
+      <p>Captured At</p>
+      <h3 id="caseTime" class="text-sm"></h3>
+    </div>
+
   </div>
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Soil Moisture</p>
-    <p id="moistureValue" class="text-xl font-bold"></p>
+
+  <!-- MAIN CONTENT -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+    <!-- LEFT PANEL -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+
+      <!-- IMAGE -->
+      <div class="relative">
+        <div id="leafImage"
+             class="aspect-square rounded-xl bg-center bg-cover max-h-[380px]">
+        </div>
+
+        <!-- IMAGE TIMESTAMP -->
+        <div id="imageTime"
+             class="absolute bottom-3 right-3 bg-black/60 text-xs px-3 py-1 rounded-full hidden">
+        </div>
+      </div>
+
+      <!-- STATUS -->
+      <div class="grid grid-cols-2 gap-4">
+
+        <div id="stressBox" class="status-card hidden">
+          <p>Stress Level</p>
+          <h4 id="stressValue"></h4>
+        </div>
+
+        <div id="timeBox" class="status-card hidden">
+          <p>Timestamp</p>
+          <h4 id="caseTime2"></h4>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+
+      <div>
+        <p id="cropName" class="uppercase text-sm tracking-wider text-[#49e619]"></p>
+        <h2 id="diseaseName" class="text-3xl font-black mt-1"></h2>
+      </div>
+
+      <div id="reasonBox" class="hidden">
+        <p class="section-label">Why this happened</p>
+        <p id="aiReason" class="text-sm mt-1"></p>
+      </div>
+
+      <div id="treatmentBox" class="hidden">
+        <p class="section-label">What to do</p>
+        <ul id="aiTreatment" class="list-disc list-inside text-sm mt-2"></ul>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+
+        <div id="fertilizerBox" class="recommend-card hidden">
+          <p>Recommended Fertilizer</p>
+          <h4 id="fertilizerName"></h4>
+        </div>
+
+        <div id="sprayBox" class="recommend-card hidden">
+          <p>Recommended Spray</p>
+          <h4 id="sprayName"></h4>
+        </div>
+
+      </div>
+    </div>
   </div>
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Soil pH</p>
-    <p id="phValue" class="text-xl font-bold"></p>
-  </div>
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Device</p>
-    <p id="deviceId" class="text-[#49e619] font-bold"></p>
-  </div>
-  <div class="bg-white/5 p-4 rounded-xl text-center">
-    <p class="text-white/40 text-xs">Time</p>
-    <p id="caseTime" class="text-sm"></p>
-  </div>
+
 </div>
 
-<!-- MAIN GRID -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+<!-- STYLES -->
+<style>
+.sensor-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+.sensor-card span {
+  font-size: 20px;
+  color: #49e619;
+}
+.sensor-card p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+.sensor-card h3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 4px;
+}
 
-<!-- LEFT PANEL -->
-<div class="bg-white/5 p-6 rounded-xl space-y-4">
-  <div id="leafImage" class="aspect-square max-h-[350px] bg-cover bg-center rounded-lg mx-auto"></div>
+.status-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 14px;
+}
+.status-card p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+.status-card h4 {
+  font-size: 16px;
+  font-weight: bold;
+}
 
-  <div class="space-y-3 mt-4">
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+}
 
-  <div class="bg-white/5 p-3 rounded-lg">
-    <p class="text-white/40 text-xs">Stress Level</p>
-    <p id="stressValue" class="text-xl font-bold"></p>
-  </div>
-
-  <div class="bg-white/5 p-3 rounded-lg">
-    <p class="text-white/40 text-xs">Captured At</p>
-    <p id="caseTime2" class="text-sm"></p>
-  </div>
-
-</div>
-</div>
-
-<!-- RIGHT PANEL -->
-<div class="bg-white/5 p-6 rounded-xl space-y-5">
-
-<h2 id="cropName" class="text-[#49e619] uppercase text-sm"></h2>
-<h1 id="diseaseName" class="text-3xl font-black"></h1>
-
-<div>
-  <p class="text-white/40 text-xs uppercase">Why it happened</p>
-  <p id="aiReason" class="mt-1"></p>
-</div>
-
-<div>
-  <p class="text-white/40 text-xs uppercase">What to do</p>
-  <ul id="aiTreatment" class="list-disc list-inside mt-1"></ul>
-</div>
-
-<div class="space-y-4 pt-4">
-
-  <div class="bg-[#49e619]/10 p-4 rounded">
-    <p class="text-xs uppercase text-[#49e619]">Recommended Fertilizer</p>
-    <p id="fertilizerName" class="font-bold mt-1"></p>
-  </div>
-
-  <div class="bg-[#49e619]/10 p-4 rounded">
-    <p class="text-xs uppercase text-[#49e619]">Recommended Spray</p>
-    <p id="sprayName" class="font-bold mt-1"></p>
-  </div>
-
-</div>
-
-</div>
-
-</div>
+.recommend-card {
+  background: rgba(73,230,25,0.1);
+  border-radius: 14px;
+  padding: 16px;
+}
+.recommend-card p {
+  font-size: 11px;
+  color: #49e619;
+  text-transform: uppercase;
+}
+.recommend-card h4 {
+  font-size: 15px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+</style>
 
 <!-- SCRIPT -->
 <script>
@@ -113,31 +210,51 @@ fetch(`/case/${id}/`)
 .then(res => res.json())
 .then(d => {
 
-  document.getElementById("leafImage").style.backgroundImage = `url('${d.image}')`;
+  if (d.image) {
+    document.getElementById("leafImage").style.backgroundImage = `url('${d.image}')`;
+    document.getElementById("imageTime").textContent = d.time;
+    document.getElementById("imageTime").classList.remove("hidden");
+  }
 
-  document.getElementById("cropName").textContent = d.crop;
-  document.getElementById("diseaseName").textContent = d.disease;
+  d.crop && (cropName.textContent = d.crop);
+  d.disease && (diseaseName.textContent = d.disease);
 
-  document.getElementById("tempValue").textContent = d.temperature + "°C";
-  document.getElementById("humidityValue").textContent = d.humidity + "%";
-  document.getElementById("moistureValue").textContent = d.soil_moisture + "%";
-  document.getElementById("phValue").textContent = d.ph;
-  document.getElementById("deviceId").textContent = d.device;
+  d.temperature && (tempValue.textContent = d.temperature + "°C");
+  d.humidity && (humidityValue.textContent = d.humidity + "%");
+  d.soil_moisture && (moistureValue.textContent = d.soil_moisture + "%");
+  d.ph && (phValue.textContent = d.ph);
+  d.device && (deviceId.textContent = d.device);
+  d.time && (caseTime.textContent = d.time);
 
-  document.getElementById("caseTime").textContent = d.time;
-  document.getElementById("caseTime2").textContent = d.time;
+  if (d.stress) {
+    stressValue.textContent = d.stress;
+    stressBox.classList.remove("hidden");
+    caseTime2.textContent = d.time;
+    timeBox.classList.remove("hidden");
+  }
 
-  document.getElementById("stressValue").textContent = d.stress;
-  document.getElementById("aiReason").textContent = d.recommendation.reason;
+  if (d.recommendation?.reason) {
+    aiReason.textContent = d.recommendation.reason;
+    reasonBox.classList.remove("hidden");
+  }
 
-  const list = document.getElementById("aiTreatment");
-  list.innerHTML = "";
-  d.recommendation.treatment.split(".").forEach(t => {
-    if (t.trim()) list.innerHTML += `<li>${t}</li>`;
-  });
+  if (d.recommendation?.treatment) {
+    aiTreatment.innerHTML = "";
+    d.recommendation.treatment.split(".").forEach(t => {
+      if (t.trim()) aiTreatment.innerHTML += `<li>${t}</li>`;
+    });
+    treatmentBox.classList.remove("hidden");
+  }
 
-  document.getElementById("fertilizerName").textContent = d.recommendation.fertilizer;
-  document.getElementById("sprayName").textContent = d.recommendation.spray;
+  if (d.recommendation?.fertilizer) {
+    fertilizerName.textContent = d.recommendation.fertilizer;
+    fertilizerBox.classList.remove("hidden");
+  }
+
+  if (d.recommendation?.spray) {
+    sprayName.textContent = d.recommendation.spray;
+    sprayBox.classList.remove("hidden");
+  }
 });
 </script>
 

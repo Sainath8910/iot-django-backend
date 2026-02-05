@@ -25,21 +25,28 @@ crop_encoder = joblib.load(os.path.join(MODEL_DIR, "crop_encoder.pkl"))
 stress_encoder = joblib.load(os.path.join(MODEL_DIR, "stress_encoder.pkl"))
 
 def predict_disease(img_path):
-    img = image.load_img(img_path, target_size=(224,224))
+    img = image.load_img(img_path, target_size=(224, 224))
     img = image.img_to_array(img)
 
-    # IMPORTANT: use ResNet50 preprocessing
+    # ResNet50 preprocessing
     img = preprocess_input(img)
-
     img = np.expand_dims(img, axis=0)
 
     preds = cnn_model.predict(img)
     class_id = int(np.argmax(preds))
-    disease = class_map[class_id]
     confidence = float(np.max(preds))
-    crop, disease = disease.split("_", 1)
-    disease = class_map[class_id]
-    return disease, confidence, crop
+
+    raw_label = class_map[class_id]  # e.g. "Corn_Common_rust_"
+
+    # ---- CLEAN & SPLIT ----
+    raw_label = raw_label.strip("_")        # remove trailing _
+    parts = raw_label.split("_", 1)
+
+    crop = parts[0]
+    disease = parts[1].replace("_", " ") if len(parts) > 1 else "Healthy"
+
+    return crop, disease, confidence
+
 def normalize_crop(crop):
     return str(crop).strip().title()
 

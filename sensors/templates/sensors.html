@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block content %}
+
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+  <div class="flex-1 overflow-y-auto p-4 lg:p-6 flex items-center">
+    <div class="max-w-7xl mx-auto w-full">
+
+      <!-- TILES -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div onclick="openGraph('temperature','Temperature (°C)')" class="tile">
+          <span class="material-symbols-outlined text-primary">thermostat</span>
+          <p>Temperature</p>
+          <h2>{{ reading.temperature|default:"--" }} °C</h2>
+        </div>
+
+        <div onclick="openGraph('humidity','Humidity (%)')" class="tile">
+          <span class="material-symbols-outlined text-primary">water_drop</span>
+          <p>Humidity</p>
+          <h2>{{ reading.humidity|default:"--" }} %</h2>
+        </div>
+
+        <div onclick="openGraph('soil_moisture','Soil Moisture (%)')" class="tile">
+          <span class="material-symbols-outlined text-primary">potted_plant</span>
+          <p>Soil Moisture</p>
+          <h2>{{ reading.soil_moisture|default:"--" }} %</h2>
+        </div>
+
+        <div onclick="openGraph('ph','pH Level')" class="tile">
+          <span class="material-symbols-outlined text-primary">science</span>
+          <p>pH Level</p>
+          <h2>{{ reading.ph|default:"--" }} pH</h2>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GRAPH MODAL -->
+  <div id="graphModal"
+       class="fixed inset-0 hidden bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+
+    <div class="bg-card-dark w-full max-w-5xl rounded-2xl p-6">
+
+      <!-- HEADER -->
+      <div class="flex justify-between items-center mb-3">
+        <h3 id="graphTitle" class="text-xl font-bold text-white"></h3>
+        <button onclick="closeModal()" class="text-text-secondary hover:text-white text-xl">✕</button>
+      </div>
+
+      <!-- GRAPH -->
+      <canvas id="graphCanvas" height="140"></canvas>
+
+      <!-- YOUTUBE-LIKE SCRUBBER -->
+      <div class="mt-4">
+        <input
+          id="timeSlider"
+          type="range"
+          min="0"
+          value="0"
+          class="w-full accent-primary cursor-pointer"
+          oninput="scrubTime(this.value)"
+        />
+        <div class="flex justify-between text-xs text-text-secondary mt-1">
+          <span id="startLabel">Start</span>
+          <span id="endLabel">End</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let chart;
+let fullData = [];
+let currentMetric = null;
+const WINDOW_SIZE = 40; // visible points (controls zoom feel)
+
+function openGraph(metric, title) {
+  currentMetric = metric;
+  document.getElementById("graphTitle").innerText = title;
+  document.getElementById("graphModal").classList.remove("hidden");
+  loadGraphData();
+}
+
+function closeModal() {
+  document.getElementById("graphModal").classList.add("hidden");
+  if (chart) chart.destroy();
+}
+
+function loadGraphData() {
+  fetch(`/api/sensor-graph/?metric=${currentMetric}`)
+    .then(res => res.json())
+    .then(data => {
+      fullData = data;
+      const slider = document.getElementById("timeSlider");
+      slider.max = data.length - 1;
+      slider.value = data.length - 1;
+      updateChart(data.length - 1);
+    });
+}
+
+function scrubTime(index) {
+  updateChart(parseInt(index));
+}
+
+function updateChart(endIndex) {
+  if (fullData.length === 0) return;
+
+  const startIndex = Math.max(0, endIndex - WINDOW_SIZE);
+  const slice = fullData.slice(startIndex, endIndex + 1);
+
+  document.getElementById("startLabel").innerText = slice[0].time;
+  document.getElementById("endLabel").innerText =
+    slice[slice.length - 1].time;
+
+  const ctx = document.getElementById("graphCanvas").getContext("2d");
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: slice.map(d => d.time),
+      datasets: [{
+        data: slice.map(d => d.value),
+        borderWidth: 2,
+        tension: 0.35
+      }]
+    },
+    options: {
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#aaa" } },
+        y: { ticks: { color: "#aaa" } }
+      }
+    }
+  });
+}
+</script>
+
+<style>
+.tile {
+  cursor: pointer;
+  background: #0f1f14;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #1f3a28;
+  transition: border-color 0.2s;
+}
+.tile:hover {
+  border-color: #49e619;
+}
+.tile h2 {
+  font-size: 28px;
+  font-weight: bold;
+  color: white;
+}
+.tile p {
+  color: #9ca3af;
+  margin-top: 6px;
+}
+</style>
+
+{% endblock %}

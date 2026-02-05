@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+  <div class="flex-1 overflow-y-auto p-6 lg:p-10">
+    <div class="max-w-5xl mx-auto flex flex-col gap-8">
+
+      <!-- PROFILE HEADER -->
+      <div class="bg-card-dark rounded-2xl border border-border-dark p-6 flex flex-col md:flex-row justify-between gap-6">
+        <div>
+          <h2 class="text-2xl font-bold text-white">{{ request.user.username }}</h2>
+          <p class="text-text-secondary">{{ request.user.email }}</p>
+        </div>
+
+        <div class="flex gap-6">
+          <div class="text-center">
+            <p class="text-xs text-text-secondary">Devices</p>
+            <p class="text-xl font-bold text-white">{{ devices.count }}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-text-secondary">Readings</p>
+            <p class="text-xl font-bold text-white">{{ total_readings }}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-text-secondary">Alerts</p>
+            <p class="text-xl font-bold text-red-500">{{ total_alerts }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE FORM -->
+      <div class="bg-card-dark rounded-2xl border border-border-dark p-6">
+        <h3 class="text-lg font-bold text-white mb-4">Profile Information</h3>
+
+        <form method="post" class="flex flex-col gap-4">
+          {% csrf_token %}
+
+          <div>
+            <label class="text-sm text-text-secondary">Phone Number</label>
+            {{ form.phone }}
+          </div>
+
+          <button type="submit"
+                  class="self-start bg-primary text-background-dark px-6 py-2 rounded-full font-bold hover:opacity-90">
+            Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- DEVICES -->
+      <div class="bg-card-dark rounded-2xl border border-border-dark p-6">
+        <h3 class="text-lg font-bold text-white mb-4">My Devices</h3>
+
+        {% if devices %}
+        <ul class="divide-y divide-border-dark">
+          {% for d in devices %}
+          <li class="py-3 flex justify-between items-center">
+            <span class="text-white font-mono">{{ d.device_id }}</span>
+            <span class="text-xs text-text-secondary">Active</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-text-secondary">No devices registered.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</main>
+
+{% endblock %}

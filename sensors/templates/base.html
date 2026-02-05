@@ -1,159 +1,233 @@
+{% load static %}
 <!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Monitoring Dashboard</title>
+  <title>{% block title %}Monitoring Dashboard{% endblock %}</title>
 
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        primary: "#49e619",
-        "background-dark": "#152111",
-        "card-dark": "#1a2c15",
-        "border-dark": "#2c4724",
-        "text-secondary": "#9fc893"
-      },
-      fontFamily: {
-        display: ["Manrope"],
-        body: ["Noto Sans"]
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#49e619",
+            "background-dark": "#152111",
+            "card-dark": "#1a2c15",
+            "border-dark": "#2c4724",
+            "text-secondary": "#9fc893"
+          },
+          fontFamily: {
+            display: ["Manrope"],
+            body: ["Noto Sans"]
+          }
+        }
       }
     }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: #2c4724; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #49e619; }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-white dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="w-20 lg:w-64 flex flex-col border-r border-border-dark bg-background-dark">
+
+    <!-- Logo -->
+    <div class="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">eco</span>
+        </div>
+        <span class="hidden lg:block text-lg font-bold text-white">Smart Agrotech</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 p-3 space-y-2 overflow-y-auto">
+
+      <!-- Dashboard -->
+      <a href="{% url 'dashboard' %}"
+         class="flex items-center gap-3 px-3 py-3 rounded-full transition
+         {% if request.resolver_match.url_name == 'dashboard' %}
+           bg-primary text-background-dark font-bold
+         {% else %}
+           text-text-secondary hover:bg-white/5 hover:text-white
+         {% endif %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="hidden lg:block">Dashboard</span>
+      </a>
+
+      <!-- Sensors -->
+      <a href="{% url 'sensors' %}"
+         class="flex items-center gap-3 px-3 py-3 rounded-full transition
+         {% if request.resolver_match.url_name == 'sensors' %}
+           bg-primary text-background-dark font-bold
+         {% else %}
+           text-text-secondary hover:bg-white/5 hover:text-white
+         {% endif %}">
+        <span class="material-symbols-outlined">thermostat</span>
+        <span class="hidden lg:block">Sensors</span>
+      </a>
+
+      <!-- devises -->
+      <a href="{% url 'devices' %}"
+         class="flex items-center gap-3 px-3 py-3 rounded-full transition
+         {% if request.resolver_match.url_name == 'devices' %}
+           bg-primary text-background-dark font-bold
+         {% else %}
+           text-text-secondary hover:bg-white/5 hover:text-white
+         {% endif %}">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="hidden lg:block">Devices</span>
+      </a>
+
+      <!-- Alerts -->
+      <a href="{% url 'alerts' %}"
+         class="flex items-center gap-3 px-3 py-3 rounded-full transition
+         {% if request.resolver_match.url_name == 'alerts' %}
+           bg-primary text-background-dark font-bold
+         {% else %}
+           text-text-secondary hover:bg-white/5 hover:text-white
+         {% endif %}">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="hidden lg:block">Alerts</span>
+
+        {% if unread_alert_count %}
+          <span class="hidden lg:flex ml-auto size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+            {{ unread_alert_count }}
+          </span>
+        {% endif %}
+      </a>
+
+      <!-- Settings -->
+      <a href="#"
+         class="flex items-center gap-3 px-3 py-3 rounded-full transition
+         {% if request.resolver_match.url_name == 'settings' %}
+           bg-primary text-background-dark font-bold
+         {% else %}
+           text-text-secondary hover:bg-white/5 hover:text-white
+         {% endif %}">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="hidden lg:block">Settings</span>
+      </a>
+
+    </nav>
+
+    <!-- User -->
+    <div class="p-4 border-t border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+        <div class="hidden lg:block overflow-hidden">
+          <p class="text-sm font-bold truncate">
+            {{ request.user.get_full_name|default:request.user.username }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-20 shrink-0 border-b border-border-dark bg-background-dark/95 backdrop-blur px-6 lg:px-10 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl lg:text-2xl font-bold">
+          {% block page_title %}Live Monitoring{% endblock %}
+        </h1>
+        <p class="hidden sm:block text-sm text-text-secondary">
+          {% block page_subtitle %}Greenhouse Unit A-42 • Real-time Data{% endblock %}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4">
+
+        <!-- Date & Time -->
+        <div class="hidden md:flex items-center gap-2 bg-card-dark border border-border-dark rounded-full px-4 py-2 text-sm text-text-secondary">
+          <span class="material-symbols-outlined text-lg">calendar_today</span>
+          <span id="current-date"></span>
+          <span class="w-px h-4 bg-border-dark mx-2"></span>
+          <span class="material-symbols-outlined text-lg">schedule</span>
+          <span id="current-time" class="text-primary font-medium"></span>
+        </div>
+
+        <!-- Profile Menu -->
+        <div class="relative">
+          <button id="profileBtn"
+                  class="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition">
+            <span class="material-symbols-outlined">person</span>
+          </button>
+
+          <div id="profileMenu"
+               class="hidden absolute right-0 mt-3 w-44 bg-card-dark border border-border-dark rounded-xl shadow-lg overflow-hidden z-50">
+            <a href="{% url 'profile' %}" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5">
+              <span class="material-symbols-outlined">account_circle</span> Profile
+            </a>
+            <div class="h-px bg-border-dark"></div>
+            <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10">
+              <span class="material-symbols-outlined">logout</span> Logout
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Content -->
+    <section class="flex-1 overflow-y-auto p-6">
+      {% block content %}{% endblock %}
+    </section>
+
+  </main>
+</div>
+
+<script>
+  function updateDateTime() {
+    const now = new Date();
+    document.getElementById("current-date").textContent =
+      now.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+    document.getElementById("current-time").textContent =
+      now.toLocaleTimeString("en-GB");
   }
-}
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+
+  const profileBtn = document.getElementById("profileBtn");
+  const profileMenu = document.getElementById("profileMenu");
+
+  profileBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    profileMenu.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", () => profileMenu.classList.add("hidden"));
 </script>
 
-<style>
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-thumb { background: #2c4724; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #49e619; }
-</style>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased overflow-hidden">
-<div class="flex h-screen w-full overflow-hidden">
-<!-- Sidebar -->
-<aside class="w-20 lg:w-64 flex flex-col border-r border-border-dark bg-background-dark transition-all duration-300">
-<div class="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-border-dark">
-<div class="flex items-center gap-3">
-<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-<span class="material-symbols-outlined">eco</span>
-</div>
-<span class="text-lg font-bold tracking-tight hidden lg:block text-white">Smart Agrotech</span>
-</div>
-</div>
-<nav class="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
-<a class="flex items-center gap-3 px-3 py-3 rounded-full bg-primary text-background-dark font-bold group transition-colors" href="#">
-<span class="material-symbols-outlined">dashboard</span>
-<span class="hidden lg:block">Dashboard</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-3 rounded-full text-text-secondary hover:bg-white/5 hover:text-white transition-colors" href="#">
-<span class="material-symbols-outlined">thermostat</span>
-<span class="hidden lg:block">Sensors</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-3 rounded-full text-text-secondary hover:bg-white/5 hover:text-white transition-colors" href="#">
-<span class="material-symbols-outlined">analytics</span>
-<span class="hidden lg:block">Analysis</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-3 rounded-full text-text-secondary hover:bg-white/5 hover:text-white transition-colors" href="#">
-<span class="material-symbols-outlined">notifications</span>
-<span class="hidden lg:block">Alerts</span>
-<span class="hidden lg:flex ml-auto size-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">3</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-3 rounded-full text-text-secondary hover:bg-white/5 hover:text-white transition-colors" href="#">
-<span class="material-symbols-outlined">settings</span>
-<span class="hidden lg:block">Settings</span>
-</a>
-</nav>
-<div class="p-4 border-t border-border-dark">
-<div class="flex items-center gap-3">
-<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shrink-0 border-2 border-primary/30" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCBFwa3QVjcuS0GTgUlnp3x_NxIMwT2-CcxxAjJR7jW2nUpEaY9wt9ARzFsvteF1-mDtfX6wurl2y_nzkL50suRtFw89lKhG9VMsCn1dp2-bnTAKdOs62cpRJJYX1_GJErJ3E4O1a6j4Px8eG_D-piCuKzzRtBFzrXe8C6X1Kbgo5WUX7w8nHtJ3XAf2jL-cWGUyme7OOYd8TD0sxrwoHctYIXsaQMcy79BuOY6Zc0hwmXQmUyneDctM6n5dDQXMcf4FAZBRNg2yMs");'></div>
-<div class="flex flex-col overflow-hidden hidden lg:block">
-<p class="text-sm font-bold text-white truncate">Sarah Jensen</p>
-<p class="text-xs text-text-secondary truncate">Lead Engineer</p>
-</div>
-</div>
-</div>
-</aside>
-<!-- Main Content -->
-<main class="flex-1 flex flex-col h-full overflow-hidden relative">
-<!-- Top Header -->
-<header class="h-20 border-b border-border-dark bg-background-dark/95 backdrop-blur z-10 flex items-center justify-between px-6 lg:px-10 shrink-0">
-<div class="flex flex-col">
-<h1 class="text-xl lg:text-2xl font-bold text-white">Live Monitoring</h1>
-<p class="text-sm text-text-secondary hidden sm:block">Greenhouse Unit A-42 • Real-time Data</p>
-</div>
-<div class="flex items-center gap-4">
-<div class="hidden md:flex items-center gap-2 bg-card-dark border border-border-dark rounded-full px-4 py-2 text-sm text-text-secondary">
-<span class="material-symbols-outlined text-lg">calendar_today</span>
-<span>Oct 24, 2023</span>
-<span class="w-px h-4 bg-border-dark mx-2"></span>
-<span class="material-symbols-outlined text-lg">schedule</span>
-<span class="text-primary font-medium">14:32:05</span>
-</div>
-<button class="relative p-2 rounded-full hover:bg-white/5 text-white transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-2 right-2 size-2 bg-primary rounded-full"></span>
-</button>
-<!-- Right: Profile Dropdown -->
-  <div class="relative">
-    <!-- Avatar Button -->
-    <button
-      id="profileBtn"
-      class="w-10 h-10 rounded-full bg-primary/20 border border-primary/30
-             flex items-center justify-center text-primary
-             hover:bg-primary/30 transition"
-    >
-      <span class="material-symbols-outlined">person</span>
-    </button>
-
-    <!-- Dropdown -->
-    <div
-      id="profileMenu"
-      class="hidden absolute right-0 mt-3 w-44
-             bg-card-dark border border-border-dark
-             rounded-xl shadow-lg overflow-hidden z-50"
-    >
-      <!-- Profile -->
-      <a href="#"
-         class="flex items-center gap-3 px-4 py-3 text-sm
-                hover:bg-white/5 transition">
-        <span class="material-symbols-outlined text-base">account_circle</span>
-        Profile
-      </a>
-
-      <!-- Divider -->
-      <div class="h-px bg-border-dark"></div>
-
-      <!-- Logout -->
-      <a href="{% url 'logout' %}"
-         class="flex items-center gap-3 px-4 py-3 text-sm text-red-400
-                hover:bg-red-500/10 transition">
-        <span class="material-symbols-outlined text-base">logout</span>
-        Logout
-      </a>
-    </div>
-  </div>
-</div>
-</header>
-<!-- Scrollable Content Area -->
-<div class="flex-1 overflow-y-auto p-6 lg:p-10 pb-20 scroll-smooth">
-<div class="max-w-7xl mx-auto flex flex-col gap-8">
-{% block content %}{% endblock %}
-</div>
-</div>
-</main>
-</div>
-</body></html>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

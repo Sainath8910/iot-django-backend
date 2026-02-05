@@ -1,55 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-<!DOCTYPE html>
-<html class="dark" lang="en">
-
-<body class="bg-background-dark text-white font-display overflow-hidden">
-
-<div class="flex h-screen">
-
-<!-- ================= MAIN ================= -->
-<main class="flex-1 flex flex-col">
-
-
-<div class="flex-1 overflow-y-auto p-6 space-y-8">
-
-<!-- ================= KPI CARDS ================= -->
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
-<div class="bg-card-dark border border-border-dark rounded-xl p-6">
-  <p class="text-text-secondary flex gap-1">
-    <span class="material-symbols-outlined">thermostat</span> Temperature
-  </p>
-  <h3 id="tempValue" class="text-3xl font-bold mt-2">--°C</h3>
-  <canvas id="tempChart" class="h-24 mt-4"></canvas>
-</div>
-
-<div class="bg-card-dark border border-border-dark rounded-xl p-6">
-  <p class="text-text-secondary flex gap-1">
-    <span class="material-symbols-outlined">water_drop</span> Humidity
-  </p>
-  <h3 id="humidValue" class="text-3xl font-bold mt-2">--%</h3>
-  <canvas id="humidChart" class="h-24 mt-4"></canvas>
-</div>
-
-<div class="bg-card-dark border border-border-dark rounded-xl p-6">
-  <p class="text-text-secondary flex gap-1">
-    <span class="material-symbols-outlined">potted_plant</span> Soil Moisture
-  </p>
-  <h3 id="soilValue" class="text-3xl font-bold mt-2">--%</h3>
-  <canvas id="soilChart" class="h-24 mt-4"></canvas>
-</div>
-
-<div class="bg-card-dark border border-border-dark rounded-xl p-6">
-  <p class="text-text-secondary flex gap-1">
-    <span class="material-symbols-outlined">science</span> pH Level
-  </p>
-  <h3 id="phValue" class="text-3xl font-bold mt-2">--</h3>
-  <canvas id="phChart" class="h-24 mt-4"></canvas>
-</div>
-
-</div>
-<!-- ================= TABLE ================= -->
 <div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
 <table class="w-full text-center">
 <thead class="bg-[#1e3419]">
@@ -65,32 +15,7 @@
 <tbody id="tableBody" class="divide-y divide-border-dark text-sm"></tbody>
 </table>
 </div>
-
-</div>
-</main>
-</div>
-
-<!-- ================= SCRIPT ================= -->
 <script>
-let tempChart, humidChart, soilChart, phChart;
-function createChart(id) {
-  return new Chart(document.getElementById(id), {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [{ data: [], borderWidth: 2, tension: 0.4 }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { x: { display: false }, y: { display: false } }
-    }
-  });
-}
-
-tempChart = createChart("tempChart");
-humidChart = createChart("humidChart");
-soilChart = createChart("soilChart");
-phChart = createChart("phChart");
 function openCase(id) {
   window.location = `/analysis/?reading=${id}`;
 }

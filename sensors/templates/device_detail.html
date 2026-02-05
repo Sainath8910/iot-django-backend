@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+  <div class="flex-1 overflow-y-auto p-6 lg:p-10">
+    <div class="max-w-7xl mx-auto flex flex-col gap-8">
+
+      <!-- HEADER -->
+      <div class="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-white">
+            Device: <span class="text-primary">{{ device.device_id }}</span>
+          </h2>
+          <p class="text-text-secondary text-sm">
+            Sensor readings & device health
+          </p>
+        </div>
+
+        <a href="{% url 'devices' %}"
+           class="text-sm text-primary hover:underline">
+          ← Back to Devices
+        </a>
+      </div>
+
+      <!-- SUMMARY TILES -->
+      {% if readings %}
+      {% with latest=readings.0 %}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <!-- Temperature -->
+        <div class="bg-card-dark border border-border-dark rounded-xl p-4">
+          <p class="text-xs text-text-secondary">Temperature</p>
+          <p class="text-2xl font-bold text-white">{{ latest.temperature }} °C</p>
+        </div>
+
+        <!-- Humidity -->
+        <div class="bg-card-dark border border-border-dark rounded-xl p-4">
+          <p class="text-xs text-text-secondary">Humidity</p>
+          <p class="text-2xl font-bold text-white">{{ latest.humidity }} %</p>
+        </div>
+
+        <!-- Soil -->
+        <div class="bg-card-dark border border-border-dark rounded-xl p-4">
+          <p class="text-xs text-text-secondary">Soil Moisture</p>
+          <p class="text-2xl font-bold text-white">{{ latest.soil_moisture }} %</p>
+        </div>
+
+        <!-- pH -->
+        <div class="bg-card-dark border border-border-dark rounded-xl p-4">
+          <p class="text-xs text-text-secondary">pH</p>
+          <p class="text-2xl font-bold text-white">{{ latest.ph }}</p>
+        </div>
+
+      </div>
+      {% endwith %}
+      {% endif %}
+
+      <!-- READINGS TABLE -->
+      <div class="bg-card-dark rounded-xl border border-border-dark overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-border-dark">
+          <h3 class="text-lg font-bold text-white">Sensor History</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+
+            <thead>
+              <tr class="bg-[#1e3419] border-b border-border-dark">
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Temp</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Humidity</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Soil</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">pH</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Crop</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Disease</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Stress</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Alert</th>
+                <th class="p-4 text-xs font-bold text-text-secondary uppercase">Time</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-border-dark">
+              {% for r in readings %}
+              <tr class="hover:bg-white/5 transition-colors">
+
+                <td class="p-4 text-white">{{ r.temperature }} °C</td>
+                <td class="p-4 text-white">{{ r.humidity }} %</td>
+                <td class="p-4 text-white">{{ r.soil_moisture }} %</td>
+                <td class="p-4 text-white">{{ r.ph }}</td>
+
+                <td class="p-4 text-white">{{ r.crop }}</td>
+                <td class="p-4 text-white">{{ r.disease }}</td>
+
+                <td class="p-4 font-bold
+                  {% if r.stress_level == 'High' %}text-red-500
+                  {% elif r.stress_level == 'Medium' %}text-yellow-500
+                  {% else %}text-green-400{% endif %}">
+                  {{ r.stress_level }}
+                </td>
+
+                <td class="p-4">
+                  {% if r.alert %}
+                  <span class="px-2 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-500">
+                    ALERT
+                  </span>
+                  {% else %}
+                  <span class="px-2 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400">
+                    OK
+                  </span>
+                  {% endif %}
+                </td>
+
+                <td class="p-4 text-text-secondary text-sm">
+                  {% if r.sensor_timestamp %}
+                    {{ r.sensor_timestamp|date:"M d, Y • H:i:s" }}
+                  {% else %}
+                    {{ r.created_at|date:"M d, Y • H:i:s" }}
+                  {% endif %}
+                </td>
+
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="p-6 text-center text-text-secondary">
+                  No readings available for this device
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+{% endblock %}

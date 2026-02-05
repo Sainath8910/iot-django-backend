@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
+from .models import UserProfile
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True)
@@ -35,3 +36,13 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
                 pass
 
         return cleaned_data
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ["phone"]
+
+        widgets = {
+            "phone": forms.TextInput(attrs={
+                "class": "w-full bg-card-dark border border-border-dark rounded-xl p-3 text-white outline-none"
+            })
+        }

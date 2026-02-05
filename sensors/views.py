@@ -14,6 +14,8 @@ from django.utils.dateparse import parse_datetime
 from .forms import CustomUserCreationForm,EmailOrUsernameLoginForm
 import threading
 from .ai_engine import predict_disease, predict_stress, agrotech_decision
+from datetime import timedelta
+from .forms import UserProfileForm
 
 def register_view(request):
     if request.method == "POST":
@@ -291,3 +293,106 @@ def get_case(request, reading_id):
 
     except SensorReading.DoesNotExist:
         return JsonResponse({"error": "Case not found"}, status=404)
+def get_alert_objects(request):
+    readings = SensorReading.objects.filter(alert=True)
+    return render(request, 'alerts.html', {'readings': readings})
+
+def sensors_tiles_view(request):
+    # Get latest sensor reading
+    reading = SensorReading.objects.order_by("-created_at").first()
+
+    return render(request, "sensors.html", {
+        "reading": reading
+    })
+def sensor_graph_api(request):
+    reading = SensorReading.objects.order_by("-created_at").first()
+    return render(request, "sensors_tiles.html", {
+        "reading": reading
+    })
+
+
+# ---- Graph API ----
+def sensor_graph_api(request):
+    metric = request.GET.get("metric")  # temperature, humidity, soil_moisture, ph
+
+    now = timezone.now()
+    start_time = now - timedelta(days=30)
+
+    readings = (
+        SensorReading.objects
+        .filter(created_at__gte=start_time)
+        .order_by("created_at")
+    )
+
+    data = []
+    for r in readings:
+        value = getattr(r, metric, None)
+        if value is not None:
+            data.append({
+                "time": r.created_at.strftime("%Y-%m-%d %H:%M"),
+                "value": value
+            })
+
+    return JsonResponse(data, safe=False)
+
+@login_required
+def profile_view(request):
+    user = request.user
+
+    # Ensure profile exists
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    # User devices
+    devices = Device.objects.filter(owner=user)
+
+    # Sensor stats
+    total_readings = SensorReading.objects.filter(device__owner=user).count()
+    total_alerts = SensorReading.objects.filter(device__owner=user, alert=True).count()
+
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect("profile")
+    else:
+        form = UserProfileForm(instance=profile)
+
+    context = {
+        "profile": profile,
+        "devices": devices,
+        "total_readings": total_readings,
+        "total_alerts": total_alerts,
+        "form": form,
+    }
+
+    return render(request, "profile.html", context)
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from .models import Device, SensorReading
+
+
+# -------- Devices Tiles Page --------
+@login_required
+def devices_view(request):
+    devices = Device.objects.filter(owner=request.user)
+    return render(request, "devices.html", {
+        "devices": devices
+    })
+
+
+# -------- Device Readings Page --------
+@login_required
+def device_detail_view(request, device_id):
+    device = get_object_or_404(Device, device_id=device_id, owner=request.user)
+
+    readings = (
+        SensorReading.objects
+        .filter(device=device)
+        .order_by("-created_at")
+    )
+
+    return render(request, "device_detail.html", {
+        "device": device,
+        "readings": readings
+    })
