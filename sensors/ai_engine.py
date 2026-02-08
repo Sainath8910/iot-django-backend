@@ -24,6 +24,59 @@ stress_model = joblib.load(os.path.join(MODEL_DIR, "stress_model.pkl"))
 crop_encoder = joblib.load(os.path.join(MODEL_DIR, "crop_encoder.pkl"))
 stress_encoder = joblib.load(os.path.join(MODEL_DIR, "stress_encoder.pkl"))
 
+CLASS_MAP = {
+    "Apple_Apple_scab": "Apple scab",
+    "Apple_Black_rot": "Black rot",
+    "Apple_Cedar_apple_rust": "Cedar apple rust",
+    "Apple_healthy": "Healthy",
+
+    "Blueberry_healthy": "Healthy",
+
+    "Cherry_(including_sour)_healthy": "Healthy",
+    "Cherry_(including_sour)_Powdery_mildew": "Powdery mildew",
+
+    "Corn_(maize)_Cercospora_leaf_spot_Gray_leaf_spot": "Cercospora leaf spot / Gray leaf spot",
+    "Corn_(maize)_Common_rust": "Common rust",
+    "Corn_(maize)_Northern_Leaf_Blight": "Northern leaf blight",
+    "Corn_(maize)_healthy": "Healthy",
+
+    "Grape_Black_rot": "Black rot",
+    "Grape_Esca_(Black_Measles)": "Esca (Black measles)",
+    "Grape_Leaf_blight_(Isariopsis_Leaf_Spot)": "Leaf blight",
+    "Grape_healthy": "Healthy",
+
+    "Orange_Huanglongbing_(Citrus_greening)": "Huanglongbing (Citrus greening)",
+
+    "Peach_Bacterial_spot": "Bacterial spot",
+    "Peach_healthy": "Healthy",
+
+    "Pepper_bell_Bacterial_spot": "Bacterial spot",
+    "Pepper_bell_healthy": "Healthy",
+
+    "Potato_Early_blight": "Early blight",
+    "Potato_Late_blight": "Late blight",
+    "Potato_healthy": "Healthy",
+
+    "Raspberry_healthy": "Healthy",
+    "Soybean_healthy": "Healthy",
+
+    "Squash_Powdery_mildew": "Powdery mildew",
+
+    "Strawberry_Leaf_scorch": "Leaf scorch",
+    "Strawberry_healthy": "Healthy",
+
+    "Tomato_Bacterial_spot": "Bacterial spot",
+    "Tomato_Early_blight": "Early blight",
+    "Tomato_Late_blight": "Late blight",
+    "Tomato_Leaf_Mold": "Leaf mold",
+    "Tomato_Septoria_leaf_spot": "Septoria leaf spot",
+    "Tomato_Spider_mites_Two_spotted_spider_mite": "Spider mites",
+    "Tomato_Target_Spot": "Target spot",
+    "Tomato_Tomato_mosaic_virus": "Tomato mosaic virus",
+    "Tomato_Tomato_Yellow_Leaf_Curl_Virus": "Yellow leaf curl virus",
+    "Tomato_healthy": "Healthy"
+}
+
 def predict_disease(img_path):
     img = image.load_img(img_path, target_size=(224, 224))
     img = image.img_to_array(img)
@@ -43,8 +96,7 @@ def predict_disease(img_path):
     parts = raw_label.split("_", 1)
 
     crop = parts[0]
-    disease = parts[1].replace("_", " ") if len(parts) > 1 else "Healthy"
-
+    disease = CLASS_MAP.get(raw_label,"Unknown disease")
     return crop, disease, confidence
 
 def normalize_crop(crop):

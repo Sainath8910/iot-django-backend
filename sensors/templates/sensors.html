@@ -2,38 +2,38 @@
 {% block content %}
 
 <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-  <div class="flex-1 overflow-y-auto p-4 lg:p-6 flex items-center">
-    <div class="max-w-7xl mx-auto w-full">
 
-      <!-- TILES -->
+  <!-- TILES -->
+  <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+    <div class="max-w-7xl mx-auto">
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <div onclick="openGraph('temperature','Temperature (°C)')" class="tile">
-          <span class="material-symbols-outlined text-primary">thermostat</span>
+          <span class="material-symbols-outlined">thermostat</span>
           <p>Temperature</p>
           <h2>{{ reading.temperature|default:"--" }} °C</h2>
         </div>
 
         <div onclick="openGraph('humidity','Humidity (%)')" class="tile">
-          <span class="material-symbols-outlined text-primary">water_drop</span>
+          <span class="material-symbols-outlined">water_drop</span>
           <p>Humidity</p>
           <h2>{{ reading.humidity|default:"--" }} %</h2>
         </div>
 
         <div onclick="openGraph('soil_moisture','Soil Moisture (%)')" class="tile">
-          <span class="material-symbols-outlined text-primary">potted_plant</span>
+          <span class="material-symbols-outlined">potted_plant</span>
           <p>Soil Moisture</p>
           <h2>{{ reading.soil_moisture|default:"--" }} %</h2>
         </div>
 
         <div onclick="openGraph('ph','pH Level')" class="tile">
-          <span class="material-symbols-outlined text-primary">science</span>
+          <span class="material-symbols-outlined">science</span>
           <p>pH Level</p>
-          <h2>{{ reading.ph|default:"--" }} pH</h2>
+          <h2>{{ reading.ph|default:"--" }}</h2>
         </div>
 
       </div>
-
     </div>
   </div>
 
@@ -41,28 +41,30 @@
   <div id="graphModal"
        class="fixed inset-0 hidden bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
 
-    <div class="bg-card-dark w-full max-w-5xl rounded-2xl p-6">
+    <div class="bg-[#0f1f14] w-full max-w-6xl rounded-2xl p-6">
 
       <!-- HEADER -->
       <div class="flex justify-between items-center mb-3">
         <h3 id="graphTitle" class="text-xl font-bold text-white"></h3>
-        <button onclick="closeModal()" class="text-text-secondary hover:text-white text-xl">✕</button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white text-xl">✕</button>
       </div>
+
+      <!-- DEVICE TOGGLES -->
+      <div id="deviceToggles" class="flex flex-wrap gap-2 mb-4"></div>
 
       <!-- GRAPH -->
       <canvas id="graphCanvas" height="140"></canvas>
-
-      <!-- YOUTUBE-LIKE SCRUBBER -->
+      <!-- TIME SCRUBBER -->
       <div class="mt-4">
         <input
           id="timeSlider"
           type="range"
           min="0"
           value="0"
-          class="w-full accent-primary cursor-pointer"
+          class="w-full accent-green-500 cursor-pointer"
           oninput="scrubTime(this.value)"
         />
-        <div class="flex justify-between text-xs text-text-secondary mt-1">
+        <div class="flex justify-between text-xs text-gray-400 mt-1">
           <span id="startLabel">Start</span>
           <span id="endLabel">End</span>
         </div>
@@ -75,11 +77,25 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
 <script>
 let chart;
-let fullData = [];
 let currentMetric = null;
-const WINDOW_SIZE = 40; // visible points (controls zoom feel)
+
+let fullData = {};          // device -> [{time, value}]
+let activeDevices = {};    // device -> bool
+
+let sliderIndex = 0;
+const WINDOW_SIZE = 40;    // visible points at once
+
+function colorFor(i) {
+  const colors = [
+    "#49e619", "#3b82f6", "#f97316",
+    "#ec4899", "#8b5cf6", "#22c55e",
+    "#14b8a6", "#eab308"
+  ];
+  return colors[i % colors.length];
+}
 
 function openGraph(metric, title) {
   currentMetric = metric;
@@ -98,43 +114,101 @@ function loadGraphData() {
     .then(res => res.json())
     .then(data => {
       fullData = data;
-      const slider = document.getElementById("timeSlider");
-      slider.max = data.length - 1;
-      slider.value = data.length - 1;
-      updateChart(data.length - 1);
+
+      // activate all devices
+      activeDevices = {};
+      Object.keys(data).forEach(d => activeDevices[d] = true);
+
+      setupSlider();
+      renderDeviceToggles();
+      updateChart(sliderIndex);
     });
 }
 
-function scrubTime(index) {
-  updateChart(parseInt(index));
+/* ---------- DEVICE TOGGLES ---------- */
+
+function renderDeviceToggles() {
+  const container = document.getElementById("deviceToggles");
+  container.innerHTML = "";
+
+  Object.keys(fullData).forEach((device, index) => {
+    const btn = document.createElement("button");
+    btn.innerText = device;
+
+    btn.className =
+      "px-3 py-1 rounded-full border text-sm transition " +
+      (activeDevices[device]
+        ? "border-green-400 text-green-400"
+        : "border-gray-600 text-gray-400");
+
+    btn.onclick = () => {
+      activeDevices[device] = !activeDevices[device];
+      renderDeviceToggles();
+      updateChart(sliderIndex);
+    };
+
+    container.appendChild(btn);
+  });
 }
 
+/* ---------- TIME SLIDER ---------- */
+
+function setupSlider() {
+  const anyDevice = Object.keys(fullData)[0];
+  const length = fullData[anyDevice]?.length || 0;
+
+  const slider = document.getElementById("timeSlider");
+  slider.min = 0;
+  slider.max = Math.max(0, length - 1);
+  sliderIndex = slider.max;
+  slider.value = sliderIndex;
+}
+
+function scrubTime(index) {
+  sliderIndex = parseInt(index);
+  updateChart(sliderIndex);
+}
+
+/* ---------- CHART ---------- */
+
 function updateChart(endIndex) {
-  if (fullData.length === 0) return;
-
-  const startIndex = Math.max(0, endIndex - WINDOW_SIZE);
-  const slice = fullData.slice(startIndex, endIndex + 1);
-
-  document.getElementById("startLabel").innerText = slice[0].time;
-  document.getElementById("endLabel").innerText =
-    slice[slice.length - 1].time;
-
   const ctx = document.getElementById("graphCanvas").getContext("2d");
   if (chart) chart.destroy();
 
+  let labels = [];
+  const datasets = [];
+
+  Object.entries(fullData).forEach(([device, points], index) => {
+    if (!activeDevices[device]) return;
+
+    const start = Math.max(0, endIndex - WINDOW_SIZE);
+    const slice = points.slice(start, endIndex + 1);
+
+    if (!labels.length)
+      labels = slice.map(p => p.time);
+
+    datasets.push({
+      label: device,
+      data: slice.map(p => p.value),
+      borderColor: colorFor(index),
+      borderWidth: 2,
+      tension: 0.35
+    });
+  });
+
+  if (!labels.length) return;
+
+  document.getElementById("startLabel").innerText = labels[0];
+  document.getElementById("endLabel").innerText = labels[labels.length - 1];
+
   chart = new Chart(ctx, {
     type: "line",
-    data: {
-      labels: slice.map(d => d.time),
-      datasets: [{
-        data: slice.map(d => d.value),
-        borderWidth: 2,
-        tension: 0.35
-      }]
-    },
+    data: { labels, datasets },
     options: {
       animation: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         x: { ticks: { color: "#aaa" } },
         y: { ticks: { color: "#aaa" } }
@@ -143,6 +217,7 @@ function updateChart(endIndex) {
   });
 }
 </script>
+
 
 <style>
 .tile {
@@ -164,6 +239,10 @@ function updateChart(endIndex) {
 .tile p {
   color: #9ca3af;
   margin-top: 6px;
+}
+.material-symbols-outlined {
+  color: #49e619;
+  font-size: 28px;
 }
 </style>
 

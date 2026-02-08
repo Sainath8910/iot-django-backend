@@ -27,7 +27,7 @@ function updateDashboard() {
 
       let labels = [], t = [], h = [], s = [], p = [], rows = "";
 
-      data.forEach(r => {
+      data.filter(r => r.alert === true).forEach(r => {
         labels.push(r.time);
         t.push(r.temperature);
         h.push(r.humidity);

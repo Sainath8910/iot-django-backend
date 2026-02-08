@@ -62,4 +62,4 @@ class CropRecommendation(models.Model):
     severity = models.CharField(max_length=20)
 
     def __str__(self):
-        return f"{self.crop} | {self.disease} | {self.stress_level}"
+        return f"{self.crop} | {self.disease} | {self.stress_level} | {self.severity} | {self.condition} | {self.reason} | {self.treatment} | {self.fertilizer} | {self.spray} | {self.severity}"

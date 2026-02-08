@@ -147,7 +147,7 @@ def sensor_data_api(request):
                 f.write(chunk)
 
         # === AI FUSION ===
-        disease, confidence, crop = predict_disease(temp_path)
+        crop, disease, confidence = predict_disease(temp_path)
         print(disease, confidence)
 
         stress = predict_stress(
@@ -212,31 +212,47 @@ def sensor_data_api(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
-@login_required(login_url='login')
+@login_required
 def dashboard(request):
-    readings = SensorReading.objects.order_by('-created_at')[:20]
-    return render(request, 'dashboard.html', {'readings': readings})
+    # get devices owned by logged-in user
+    user_devices = Device.objects.filter(owner=request.user)
 
+    # get latest readings ONLY from user's devices
+    readings = (
+        SensorReading.objects
+        .filter(device__in=user_devices)
+        .order_by('-created_at')[:20]
+    )
+
+    return render(request, 'dashboard.html', {'readings': readings})
+@login_required
 def latest_readings(request):
-    readings = SensorReading.objects.order_by("-created_at")[:20][::-1]
+    user_devices = Device.objects.filter(owner=request.user)
+
+    readings = (
+        SensorReading.objects
+        .filter(device__in=user_devices)
+        .order_by("-created_at")[:20]
+    )
 
     data = []
     for r in readings:
         data.append({
             "id": r.id,
-            "time": r.sensor_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "time": r.sensor_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    if r.sensor_timestamp else "",
             "temperature": r.temperature,
             "humidity": r.humidity,
             "soil": r.soil_moisture,
             "ph": r.ph,
             "alert": r.alert,
 
-            # THESE MUST MATCH JS
+            # must match JS
             "disease": r.disease,
             "stress": r.stress_level,
             "decision": r.decision,
             "image": r.image.url if r.image else "",
-            "device": r.device.device_id
+            "device": r.device.device_id,
         })
 
     return JsonResponse(data, safe=False)
@@ -294,46 +310,37 @@ def get_case(request, reading_id):
     except SensorReading.DoesNotExist:
         return JsonResponse({"error": "Case not found"}, status=404)
 def get_alert_objects(request):
-    readings = SensorReading.objects.filter(alert=True)
+    devices = Device.objects.filter(owner=request.user)
+    readings = SensorReading.objects.filter(alert=True, device__in=devices)
     return render(request, 'alerts.html', {'readings': readings})
 
 def sensors_tiles_view(request):
     # Get latest sensor reading
-    reading = SensorReading.objects.order_by("-created_at").first()
+    devices = Device.objects.filter(owner=request.user)
+    reading = SensorReading.objects.filter(device__in=devices).order_by("-created_at").first()
 
-    return render(request, "sensors.html", {
-        "reading": reading
-    })
-def sensor_graph_api(request):
-    reading = SensorReading.objects.order_by("-created_at").first()
-    return render(request, "sensors_tiles.html", {
-        "reading": reading
-    })
-
+    return render(request, "sensors.html", {"reading": reading})
 
 # ---- Graph API ----
 def sensor_graph_api(request):
-    metric = request.GET.get("metric")  # temperature, humidity, soil_moisture, ph
+    metric = request.GET.get("metric")
 
-    now = timezone.now()
-    start_time = now - timedelta(days=30)
-
-    readings = (
+    qs = (
         SensorReading.objects
-        .filter(created_at__gte=start_time)
+        .filter(device__owner=request.user)
+        .select_related("device")
         .order_by("created_at")
     )
 
-    data = []
-    for r in readings:
-        value = getattr(r, metric, None)
-        if value is not None:
-            data.append({
-                "time": r.created_at.strftime("%Y-%m-%d %H:%M"),
-                "value": value
-            })
+    result = {}
+    for r in qs:
+        device_id = r.device.device_id
+        result.setdefault(device_id, []).append({
+            "time": r.sensor_timestamp.strftime("%H:%M"),
+            "value": getattr(r, metric)
+        })
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse(result)
 
 @login_required
 def profile_view(request):
