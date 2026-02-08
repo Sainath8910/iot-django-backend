@@ -1,28 +1,24 @@
 import os
 import json
-import joblib
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from django.conf import settings
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 
+
 MODEL_DIR = os.path.join(settings.BASE_DIR, "model")
 
-# Load CNN
+
 cnn_model = tf.keras.models.load_model(
     os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
 )
 
+# Class index mapping
 with open(os.path.join(MODEL_DIR, "class_indices.json")) as f:
     class_map = json.load(f)
-    class_map = {v:k for k,v in class_map.items()}
+    class_map = {v: k for k, v in class_map.items()}
 
-# Load Random Forest
-stress_model = joblib.load(os.path.join(MODEL_DIR, "stress_model.pkl"))
-crop_encoder = joblib.load(os.path.join(MODEL_DIR, "crop_encoder.pkl"))
-stress_encoder = joblib.load(os.path.join(MODEL_DIR, "stress_encoder.pkl"))
 
 CLASS_MAP = {
     "Apple_Apple_scab": "Apple scab",
@@ -35,7 +31,7 @@ CLASS_MAP = {
     "Cherry_(including_sour)_healthy": "Healthy",
     "Cherry_(including_sour)_Powdery_mildew": "Powdery mildew",
 
-    "Corn_(maize)_Cercospora_leaf_spot_Gray_leaf_spot": "Cercospora leaf spot / Gray leaf spot",
+    "Corn_(maize)_Cercospora_leaf_spot_Gray_leaf_spot": "Gray leaf spot",
     "Corn_(maize)_Common_rust": "Common rust",
     "Corn_(maize)_Northern_Leaf_Blight": "Northern leaf blight",
     "Corn_(maize)_healthy": "Healthy",
@@ -45,7 +41,7 @@ CLASS_MAP = {
     "Grape_Leaf_blight_(Isariopsis_Leaf_Spot)": "Leaf blight",
     "Grape_healthy": "Healthy",
 
-    "Orange_Huanglongbing_(Citrus_greening)": "Huanglongbing (Citrus greening)",
+    "Orange_Huanglongbing_(Citrus_greening)": "Citrus greening",
 
     "Peach_Bacterial_spot": "Bacterial spot",
     "Peach_healthy": "Healthy",
@@ -77,11 +73,15 @@ CLASS_MAP = {
     "Tomato_healthy": "Healthy"
 }
 
+
+with open(os.path.join(MODEL_DIR, "crop_data.json")) as f:
+    CROP_PROFILES = json.load(f)
+
+
 def predict_disease(img_path):
     img = image.load_img(img_path, target_size=(224, 224))
     img = image.img_to_array(img)
 
-    # ResNet50 preprocessing
     img = preprocess_input(img)
     img = np.expand_dims(img, axis=0)
 
@@ -89,43 +89,55 @@ def predict_disease(img_path):
     class_id = int(np.argmax(preds))
     confidence = float(np.max(preds))
 
-    raw_label = class_map[class_id]  # e.g. "Corn_Common_rust_"
+    raw_label = class_map[class_id].strip("_")
+    crop = raw_label.split("_", 1)[0]
+    disease = CLASS_MAP.get(raw_label, "Unknown disease")
 
-    # ---- CLEAN & SPLIT ----
-    raw_label = raw_label.strip("_")        # remove trailing _
-    parts = raw_label.split("_", 1)
+    return crop, disease, round(confidence * 100, 2)
 
-    crop = parts[0]
-    disease = CLASS_MAP.get(raw_label,"Unknown disease")
-    return crop, disease, confidence
 
 def normalize_crop(crop):
-    return str(crop).strip().title()
+    return str(crop).strip().lower()
 
 def predict_stress(crop, temp, humidity, moisture, ph):
     crop = normalize_crop(crop)
 
-    crop_id = crop_encoder.transform([crop])[0]
+    if crop not in CROP_PROFILES:
+        return "UNKNOWN"
 
-    X = pd.DataFrame([{
-        "crop_encoded": crop_id,
-        "temperature_C": float(temp),
-        "humidity_pct": float(humidity),
-        "soil_moisture_pct": float(moisture),
-        "soil_pH": float(ph)
-    }])
+    profile = CROP_PROFILES[crop]
+    risk = 0
 
-    stress_id = stress_model.predict(X)[0]
-    stress = stress_encoder.inverse_transform([stress_id])[0]
+    if not (profile["temperature"]["min"] <= temp <= profile["temperature"]["max"]):
+        risk += 2
 
-    return stress
-def agrotech_decision(disease, confidence, stress):
-    is_healthy = "healthy" in disease.lower()
-    if not is_healthy and stress == "High":
-        return "CRITICAL: Disease detected and plant under severe stress. Immediate treatment required."
-    elif not is_healthy:
-        return "WARNING: Disease detected. Monitor and apply treatment."
-    elif stress == "High":
-        return "PREVENTIVE: Plant under high stress. Check irrigation and nutrients."
+    if not (profile["humidity"]["min"] <= humidity <= profile["humidity"]["max"]):
+        risk += 1
+
+    if not (profile["soil_moisture"]["min"] <= moisture <= profile["soil_moisture"]["max"]):
+        risk += 2
+
+    if not (profile["soil_pH"]["min"] <= ph <= profile["soil_pH"]["max"]):
+        risk += 1
+
+    if risk <= 1:
+        return "LOW"
+    elif risk <= 3:
+        return "MEDIUM"
     else:
-        return "Healthy. No action required."
+        return "HIGH"
+
+
+def agrotech_decision(disease, stress):
+    is_healthy = "healthy" in disease.lower()
+
+    if not is_healthy and stress == "HIGH":
+        return "CRITICAL: Disease detected with unfavorable environmental conditions. Immediate treatment required."
+    elif not is_healthy:
+        return "WARNING: Disease detected. Monitor crop and apply recommended treatment."
+    elif stress == "HIGH":
+        return "PREVENTIVE ALERT: Crop under environmental stress. Adjust irrigation or nutrients."
+    elif stress == "MEDIUM":
+        return "CAUTION: Slight stress detected. Monitor crop conditions."
+    else:
+        return "NORMAL: Crop is healthy and conditions are optimal."

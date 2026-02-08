@@ -92,8 +92,8 @@
                 <td class="p-4 text-white">{{ r.disease }}</td>
 
                 <td class="p-4 font-bold
-                  {% if r.stress_level == 'High' %}text-red-500
-                  {% elif r.stress_level == 'Medium' %}text-yellow-500
+                  {% if r.stress_level == 'HIGH' %}text-red-500
+                  {% elif r.stress_level == 'MEDIUM' %}text-yellow-500
                   {% else %}text-green-400{% endif %}">
                   {{ r.stress_level }}
                 </td>

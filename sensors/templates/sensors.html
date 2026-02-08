@@ -82,11 +82,11 @@
 let chart;
 let currentMetric = null;
 
-let fullData = {};          // device -> [{time, value}]
-let activeDevices = {};    // device -> bool
+let fullData = {};
+let activeDevices = {};
 
 let sliderIndex = 0;
-const WINDOW_SIZE = 40;    // visible points at once
+const WINDOW_SIZE = 40;
 
 function colorFor(i) {
   const colors = [
@@ -135,11 +135,18 @@ function renderDeviceToggles() {
     const btn = document.createElement("button");
     btn.innerText = device;
 
+    const color = colorFor(index);
+
     btn.className =
-      "px-3 py-1 rounded-full border text-sm transition " +
-      (activeDevices[device]
-        ? "border-green-400 text-green-400"
-        : "border-gray-600 text-gray-400");
+      "px-3 py-1 rounded-full border text-sm transition";
+
+    if (activeDevices[device]) {
+      btn.style.borderColor = color;
+      btn.style.color = color;
+    } else {
+      btn.style.borderColor = "#4b5563"; // gray-600
+      btn.style.color = "#9ca3af";       // gray-400
+    }
 
     btn.onclick = () => {
       activeDevices[device] = !activeDevices[device];
@@ -240,7 +247,7 @@ function updateChart(endIndex) {
   color: #9ca3af;
   margin-top: 6px;
 }
-.material-symbols-outlined {
+.tile.material-symbols-outlined {
   color: #49e619;
   font-size: 28px;
 }

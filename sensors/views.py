@@ -158,10 +158,10 @@ def sensor_data_api(request):
             ph
         )
 
-        decision = agrotech_decision(disease, confidence, stress)
+        decision = agrotech_decision(disease, stress)
 
         is_healthy = "healthy" in disease.lower()
-        alert_required = (not is_healthy or stress == "High")
+        alert_required = (not is_healthy or stress == "HIGH")
 
         # Store in DB
         reading = SensorReading.objects.create(
@@ -290,7 +290,7 @@ def get_case(request, reading_id):
             "disease": r.disease,
             "confidence": getattr(r, "confidence", 0.0),
             "stress": r.stress_level,
-            "stress_score": 90 if r.stress_level == "High" else 40 if r.stress_level == "Moderate" else 10,
+            "stress_score": 90 if r.stress_level == "HIGH" else 40 if r.stress_level == "MEDIUM" else 10,
             "decision": r.decision,
             "temperature": r.temperature,
             "humidity": r.humidity,

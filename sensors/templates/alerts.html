@@ -53,7 +53,7 @@ function updateDashboard() {
             ${r.disease}
           </td>
 
-          <td class="p-4 font-semibold ${r.stress === "High" ? "text-red-400" : "text-primary"}">
+          <td class="p-4 font-semibold ${r.stress === "HIGH" ? "text-red-400" : r.stress === "MEDIUM" ? "text-yellow-400" : "text-primary"}">
             ${r.stress}
           </td>
 

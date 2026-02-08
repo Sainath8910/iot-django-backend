@@ -1,0 +1,86 @@
+{
+  "apple": {
+    "temperature": { "min": 18, "max": 30 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 50, "max": 75 },
+    "soil_pH": { "min": 5.5, "max": 7.0 }
+  },
+  "blueberry": {
+    "temperature": { "min": 16, "max": 27 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 55, "max": 75 },
+    "soil_pH": { "min": 4.5, "max": 5.5 }
+  },
+  "cherry": {
+    "temperature": { "min": 15, "max": 25 },
+    "humidity": { "min": 55, "max": 75 },
+    "soil_moisture": { "min": 45, "max": 70 },
+    "soil_pH": { "min": 6.0, "max": 7.0 }
+  },
+  "corn": {
+    "temperature": { "min": 18, "max": 32 },
+    "humidity": { "min": 50, "max": 80 },
+    "soil_moisture": { "min": 60, "max": 85 },
+    "soil_pH": { "min": 5.8, "max": 7.0 }
+  },
+  "grape": {
+    "temperature": { "min": 20, "max": 32 },
+    "humidity": { "min": 50, "max": 70 },
+    "soil_moisture": { "min": 40, "max": 65 },
+    "soil_pH": { "min": 5.5, "max": 7.0 }
+  },
+  "orange": {
+    "temperature": { "min": 20, "max": 35 },
+    "humidity": { "min": 60, "max": 85 },
+    "soil_moisture": { "min": 50, "max": 75 },
+    "soil_pH": { "min": 5.5, "max": 7.5 }
+  },
+  "peach": {
+    "temperature": { "min": 18, "max": 30 },
+    "humidity": { "min": 55, "max": 75 },
+    "soil_moisture": { "min": 45, "max": 70 },
+    "soil_pH": { "min": 6.0, "max": 7.0 }
+  },
+  "pepper": {
+    "temperature": { "min": 20, "max": 30 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 45, "max": 70 },
+    "soil_pH": { "min": 5.5, "max": 6.8 }
+  },
+  "potato": {
+    "temperature": { "min": 15, "max": 25 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 50, "max": 80 },
+    "soil_pH": { "min": 5.0, "max": 6.5 }
+  },
+  "raspberry": {
+    "temperature": { "min": 16, "max": 27 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 55, "max": 75 },
+    "soil_pH": { "min": 5.5, "max": 6.5 }
+  },
+  "soybean": {
+    "temperature": { "min": 20, "max": 30 },
+    "humidity": { "min": 50, "max": 75 },
+    "soil_moisture": { "min": 55, "max": 80 },
+    "soil_pH": { "min": 6.0, "max": 7.0 }
+  },
+  "squash": {
+    "temperature": { "min": 18, "max": 30 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 50, "max": 75 },
+    "soil_pH": { "min": 6.0, "max": 6.8 }
+  },
+  "strawberry": {
+    "temperature": { "min": 15, "max": 25 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 55, "max": 75 },
+    "soil_pH": { "min": 5.5, "max": 6.5 }
+  },
+  "tomato": {
+    "temperature": { "min": 18, "max": 30 },
+    "humidity": { "min": 60, "max": 80 },
+    "soil_moisture": { "min": 45, "max": 70 },
+    "soil_pH": { "min": 5.5, "max": 7.0 }
+  }
+}
