@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import devices_view, device_detail_view,profile_view,get_alert_objects, get_case, sensor_data_api,dashboard,latest_readings,register_view,login_view,logout_view,analysis_page, sensor_graph_api, sensors_tiles_view
+from .views import devices_view, device_detail_view,profile_view,get_alert_objects, get_case, sensor_data_api,dashboard,latest_readings,register_view,login_view,logout_view,analysis_page, sensor_graph_api, sensors_tiles_view, upload_image
 
 urlpatterns = [
     path('sensor-data/', sensor_data_api),
+    path("upload_image/", upload_image),
     path('', dashboard, name='dashboard'),
     path('latest/', latest_readings),
     path('login/', login_view, name='login'),

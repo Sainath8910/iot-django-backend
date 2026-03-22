@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from .forms import CustomUserCreationForm,EmailOrUsernameLoginForm
+from django.core.files.base import ContentFile
 import threading
 from .ai_engine import predict_disease, predict_stress, agrotech_decision
 from datetime import timedelta
@@ -116,9 +117,7 @@ def sensor_data_api(request):
         return JsonResponse({"error": "Only POST method allowed"}, status=405)
 
     try:
-        # Multipart form-data (IoT + image)
-        data = request.POST
-        files = request.FILES
+        data = json.loads(request.body)
 
         device_id = data.get("device_id")
         if not device_id:
@@ -132,38 +131,9 @@ def sensor_data_api(request):
         soil_moisture = int(data.get("soil_moisture", 0))
         ph = float(data.get("ph", 7))
 
-        # IoT timestamp
-        sensor_timestamp = parse_datetime(data.get("timestamp"))
+        sensor_timestamp = parse_datetime(data.get("timestamp")) or None
 
-        # Image
-        image = files.get("image")
-        if not image:
-            return JsonResponse({"error": "Leaf image is required"}, status=400)
-
-        # Save temporary image for CNN
-        temp_path = f"media/temp/{files.get("image")}_leaf.jpg"
-        with open(temp_path, "wb+") as f:
-            for chunk in image.chunks():
-                f.write(chunk)
-
-        # === AI FUSION ===
-        crop, disease, confidence = predict_disease(temp_path)
-        print(disease, confidence)
-
-        stress = predict_stress(
-            crop,
-            temperature,
-            humidity,
-            soil_moisture,
-            ph
-        )
-
-        decision = agrotech_decision(disease, stress)
-
-        is_healthy = "healthy" in disease.lower()
-        alert_required = (not is_healthy or stress == "HIGH")
-
-        # Store in DB
+        # Create entry FIRST (no image yet)
         reading = SensorReading.objects.create(
             device=device,
             temperature=temperature,
@@ -171,39 +141,12 @@ def sensor_data_api(request):
             soil_moisture=soil_moisture,
             ph=ph,
             sensor_timestamp=sensor_timestamp,
-            image=image,
-            disease=disease,
-            stress_level=stress,
-            decision=decision,
-            alert=alert_required,
-            crop=crop
+            image=None,  # will be updated later
         )
 
-        # Send alerts
-        if alert_required:
-            threading.Thread(
-                target=send_alerts_async,
-                args=({
-                    "crop": crop,
-                    "temperature": temperature,
-                    "humidity": humidity,
-                    "soil_moisture": soil_moisture,
-                    "ph": ph,
-                    "disease": disease,
-                    "confidence": confidence,
-                    "stress": stress,
-                    "decision": decision,
-                    "timestamp": sensor_timestamp
-                }, device.owner),
-                daemon=True
-            ).start()
-
         return JsonResponse({
-            "status": "success",
-            "disease": disease,
-            "stress_level": stress,
-            "decision": decision,
-            "timestamp": sensor_timestamp
+            "status": "sensor stored",
+            "reading_id": reading.id
         }, status=200)
 
     except Device.DoesNotExist:
@@ -211,6 +154,90 @@ def sensor_data_api(request):
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+@csrf_exempt
+def upload_image(request):
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST method allowed"}, status=405)
+
+    try:
+        device_id = request.GET.get("device_id")
+
+        if not device_id:
+            return JsonResponse({"error": "device_id required"}, status=400)
+
+        device = Device.objects.get(device_id=device_id)
+
+        # Get latest reading WITHOUT image
+        reading = SensorReading.objects.filter(
+            device=device,
+            image__isnull=True
+        ).last()
+
+        if not reading:
+            return JsonResponse({"error": "No pending sensor data"}, status=404)
+
+        # Save image
+        image_file = ContentFile(request.body, name=f"{device_id}.jpg")
+        reading.image.save(f"{device_id}.jpg", image_file)
+
+        # ===== AI PROCESSING =====
+        temp_path = reading.image.path
+
+        crop, disease, confidence = predict_disease(temp_path)
+
+        stress = predict_stress(
+            crop,
+            reading.temperature,
+            reading.humidity,
+            reading.soil_moisture,
+            reading.ph
+        )
+
+        decision = agrotech_decision(disease, stress)
+
+        is_healthy = "healthy" in disease.lower()
+        alert_required = (not is_healthy or stress == "HIGH")
+
+        # Update DB
+        reading.disease = disease
+        reading.stress_level = stress
+        reading.decision = decision
+        reading.alert = alert_required
+        reading.crop = crop
+        reading.save()
+
+        # Alerts
+        if alert_required:
+            threading.Thread(
+                target=send_alerts_async,
+                args=({
+                    "crop": crop,
+                    "temperature": reading.temperature,
+                    "humidity": reading.humidity,
+                    "soil_moisture": reading.soil_moisture,
+                    "ph": reading.ph,
+                    "disease": disease,
+                    "confidence": confidence,
+                    "stress": stress,
+                    "decision": decision,
+                }, device.owner),
+                daemon=True
+            ).start()
+
+        return JsonResponse({
+            "status": "image processed",
+            "disease": disease,
+            "stress": stress,
+            "decision": decision
+        }, status=200)
+
+    except Device.DoesNotExist:
+        return JsonResponse({"error": "Invalid device_id"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 @login_required
 def dashboard(request):
