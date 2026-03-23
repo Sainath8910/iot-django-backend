@@ -2,20 +2,19 @@ import os
 import json
 import numpy as np
 from django.conf import settings
-
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.resnet50 import preprocess_input
 
 MODEL_DIR = os.path.join(settings.BASE_DIR, "model")
-
-
-cnn_model = None
+MODEL_PATH = os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
+cnn_model = load_model(MODEL_PATH)
 
 def get_model():
     global cnn_model
 
     if cnn_model is None:
-        import tensorflow as tf
-        from tensorflow.keras.models import load_model
-
         MODEL_PATH = os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
         cnn_model = load_model(MODEL_PATH)
 
@@ -86,8 +85,6 @@ with open(os.path.join(MODEL_DIR, "crop_data.json")) as f:
 
 
 def predict_disease(img_path):
-    from tensorflow.keras.preprocessing import image
-    from tensorflow.keras.applications.resnet50 import preprocess_input
     img = image.load_img(img_path, target_size=(224, 224))
     img = image.img_to_array(img)
 

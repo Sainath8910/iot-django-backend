@@ -17,7 +17,7 @@ class Device(models.Model):
 
 class SensorReading(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
-
+    reading_id = models.CharField(max_length=100, null=True, blank=True)
     # Sensor data
     temperature = models.FloatField(default=0.0)
     humidity = models.FloatField(default=0.0)
