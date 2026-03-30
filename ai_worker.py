@@ -49,6 +49,7 @@ def process():
 
             # AI
             crop, disease, confidence = predict_disease(img_path)
+            print(f"Predicted: {crop}, {disease} ({confidence}%)")
 
             stress = predict_stress(
                 crop,
