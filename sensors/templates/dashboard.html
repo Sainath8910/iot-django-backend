@@ -121,7 +121,9 @@ function updateDashboard() {
 
         rows += `
         <tr class="hover:bg-white/5 cursor-pointer" onclick="openCase(${r.id})">
-          <td class="p-4">${r.time}</td>
+          <td class="p-4">
+  ${r.time || formatDateTime(r.created_at)}
+</td>
 
           <td class="p-4 text-xs text-text-secondary max-w-xs truncate" title="${r.decision}">
             ${r.device}

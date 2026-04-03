@@ -254,8 +254,11 @@ def latest_readings(request):
     for r in readings:
         data.append({
             "id": r.id,
-            "time": r.sensor_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                    if r.sensor_timestamp else "",
+            "time":(
+    r.sensor_timestamp.strftime("%b %d, %Y • %H:%M:%S")
+    if r.sensor_timestamp
+    else r.created_at.strftime("%b %d, %Y • %H:%M:%S")
+),
             "temperature": r.temperature,
             "humidity": r.humidity,
             "soil": r.soil_moisture,
