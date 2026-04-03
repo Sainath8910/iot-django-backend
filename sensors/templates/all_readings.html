@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<body class="bg-background-dark text-white font-display">
+
+<div class="flex h-screen">
+
+  <!-- ================= MAIN ================= -->
+  <main class="flex-1 flex flex-col">
+
+    <a href="/" class="text-sm text-primary hover:underline">
+        ← Back to Dashboard
+    </a>
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
+
+        <table class="w-full text-center">
+          <thead class="bg-[#1e3419]">
+            <tr>
+              <th class="p-4 text-xs text-text-secondary">Time</th>
+              <th class="p-4 text-xs text-text-secondary">Device</th>
+              <th class="p-4 text-xs text-text-secondary">Image</th>
+              <th class="p-4 text-xs text-text-secondary">Disease</th>
+              <th class="p-4 text-xs text-text-secondary">Stress</th>
+              <th class="p-4 text-xs text-text-secondary">Status</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-border-dark text-sm">
+
+            {% for r in readings %}
+            <tr class="hover:bg-white/5 cursor-pointer" onclick="openCase({{ r.id }})">
+
+              <!-- TIME to show data and time-->
+              <td class="p-4">
+                {{ r.created_at|date:"Y-m-d H:i:s" }}
+              </td>
+
+              <!-- DEVICE -->
+              <td class="p-4 text-xs text-text-secondary max-w-xs truncate">
+                {{ r.device.device_id }}
+              </td>
+
+              <!-- IMAGE -->
+              <td class="p-4 text-center">
+                <div class="flex justify-center items-center">
+                  {% if r.image %}
+                  <img src="{{ r.image.url }}"
+                       class="w-12 h-12 rounded-lg object-cover border border-border-dark"/>
+                  {% else %}
+                  <span class="text-xs text-gray-400">No Image</span>
+                  {% endif %}
+                </div>
+              </td>
+
+              <!-- DISEASE -->
+              <td class="p-4 font-semibold 
+                {% if "healthy" in r.disease|lower %}
+                  text-primary
+                {% else %}
+                  text-red-400
+                {% endif %}">
+                {{ r.disease }}
+              </td>
+
+              <!-- STRESS -->
+              <td class="p-4 font-semibold 
+                {% if r.stress_level == "HIGH" %}
+                  text-red-400
+                {% elif r.stress_level == "MEDIUM" %}
+                  text-yellow-400
+                {% else %}
+                  text-primary
+                {% endif %}">
+                {{ r.stress_level }}
+              </td>
+
+              <!-- STATUS -->
+              <td class="p-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold 
+                  {% if r.alert %}
+                    bg-red-500/20 text-red-500
+                  {% else %}
+                    bg-primary/20 text-primary
+                  {% endif %}">
+                  {% if r.alert %}ALERT{% else %}NORMAL{% endif %}
+                </span>
+              </td>
+
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="p-6 text-gray-400">
+                No readings found
+              </td>
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+function openCase(id) {
+  window.location = `/analysis/?reading=${id}`;
+}
+
+function goBack() {
+  window.location.href = "/";
+}
+</script>
+
+</body>
+</html>
+
+{% endblock %}

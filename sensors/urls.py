@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import devices_view, device_detail_view,profile_view,get_alert_objects, get_case, sensor_data_api,dashboard,latest_readings,register_view,login_view,logout_view,analysis_page, sensor_graph_api, sensors_tiles_view
+from .views import all_readings, devices_view, device_detail_view,profile_view,get_alert_objects, get_case, sensor_data_api,dashboard,latest_readings,register_view,login_view,logout_view,analysis_page, sensor_graph_api, sensors_tiles_view
 
 urlpatterns = [
     path('sensor-data/', sensor_data_api),
@@ -16,4 +16,5 @@ urlpatterns = [
     path("profile/", profile_view, name="profile"),
     path("devices/", devices_view, name="devices"),
     path("devices/<str:device_id>/", device_detail_view, name="device_detail"),
+    path("all-readings/", all_readings, name="all_readings"),
 ]

@@ -64,6 +64,13 @@
 </thead>
 <tbody id="tableBody" class="divide-y divide-border-dark text-sm"></tbody>
 </table>
+<!-- 🔽 FOOTER BUTTON -->
+  <div class="px-4 py-3 border-t border-border-dark flex justify-end">
+  <a href="{% url 'all_readings' %}" 
+     class="text-sm text-primary hover:underline">
+    View all →
+  </a>
+</div>
 </div>
 
 </div>
@@ -93,6 +100,9 @@ soilChart = createChart("soilChart");
 phChart = createChart("phChart");
 function openCase(id) {
   window.location = `/analysis/?reading=${id}`;
+}
+function goToAllReadings() {
+  window.location.href = "/all-readings/";
 }
 function updateDashboard() {
   fetch("/latest/")

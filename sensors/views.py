@@ -113,7 +113,7 @@ def send_alert_sms(sensor_data, user):
 def send_alerts_async(sensor_data, user):
     try:
         print("Async alert started")
-        send_alert_email(sensor_data, user)
+        #send_alert_email(sensor_data, user)
         print("Email sent")
         #send_alert_sms(sensor_data, user)
         print("SMS sent")
@@ -230,12 +230,16 @@ def dashboard(request):
 
     # get latest readings ONLY from user's devices
     readings = (
-        SensorReading.objects
-        .filter(device__in=user_devices)
-        .order_by('-created_at')[:20]
+        SensorReading.objects.filter(device__in=user_devices).order_by('-created_at')[:5]
     )
 
     return render(request, 'dashboard.html', {'readings': readings})
+def all_readings(request):
+    user_devices = Device.objects.filter(owner=request.user)
+    readings = (
+        SensorReading.objects.filter(device__in=user_devices).order_by('-created_at')
+    )
+    return render(request, "all_readings.html",{'readings': readings})
 @login_required
 def latest_readings(request):
     user_devices = Device.objects.filter(owner=request.user)
@@ -243,7 +247,7 @@ def latest_readings(request):
     readings = (
         SensorReading.objects
         .filter(device__in=user_devices)
-        .order_by("-created_at")[:20]
+        .order_by("-created_at")[:5]
     )
 
     data = []
