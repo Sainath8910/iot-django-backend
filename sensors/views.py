@@ -14,6 +14,7 @@ from django.core.files.base import ContentFile
 import threading
 from .ai_engine import predict_disease, predict_stress, agrotech_decision
 from .forms import UserProfileForm
+from django.core.mail import EmailMultiAlternatives
 
 def register_view(request):
     if request.method == "POST":
@@ -49,26 +50,38 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-def send_alert_email(sensor_data,user):
-    send_mail(
-        subject="🚨 IoT ALERT DETECTED",
-        message=f"""
-            Alert detected!
-            Crop: {sensor_data.get('crop')}
-            Temperature: {sensor_data.get('temperature')}
-            Humidity: {sensor_data.get('humidity')}
-            Soil_moisture: {sensor_data.get('soil_moisture')}
-            pH: {sensor_data.get('ph')}
-            Time: {sensor_data.get("timestamp")}
-            Disease: {sensor_data.get("disease")} 
-            Confidence: {sensor_data.get("confidence"):.2f}
-            Stress Level: {sensor_data.get("stress")}
-            Decision: {sensor_data.get("decision")}
-        """,
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=[user.email],
-        fail_silently=False
-    )
+def send_alert_email(sensor_data, user): 
+    subject = "🚨 IoT ALERT DETECTED" 
+    html_content = f""" 
+    <html> 
+    <body style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;"> 
+    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"> 
+    <!-- Header --> 
+    <div style="background-color: #e63946; color: white; padding: 15px; text-align: center;"> 
+    <h2>🚨 IoT Alert Detected</h2> 
+    </div> <!-- Content --> 
+    <div style="padding: 20px; color: #333;"> 
+    <p><strong>Crop:</strong> {sensor_data.get('crop')}</p> 
+    <hr> 
+    <h3 style="color:#457b9d;">🌡️ Sensor Readings</h3> 
+    <p><strong>Temperature:</strong> {sensor_data.get('temperature')} °C</p> 
+    <p><strong>Humidity:</strong> {sensor_data.get('humidity')} %</p> 
+    <p><strong>Soil Moisture:</strong> {sensor_data.get('soil_moisture')}</p> 
+    <p><strong>pH Level:</strong> {sensor_data.get('ph')}</p> 
+    <hr> 
+    <h3 style="color:#1d3557;">🧪 Analysis</h3> 
+    <p><strong>Disease:</strong> {sensor_data.get('disease')}</p> 
+    <p><strong>Confidence:</strong> {sensor_data.get("confidence"):.2f}</p> 
+    <p><strong>Stress Level:</strong> <span style="color:red; font-weight:bold;"> {sensor_data.get("stress")} </span> </p> 
+    <p><strong>Decision:</strong> {sensor_data.get("decision")}</p> 
+    <hr> 
+    <p><strong>🕒 Time:</strong> {sensor_data.get("timestamp")}</p> 
+    </div> 
+    <!-- Footer --> <div style="background-color: #f1f1f1; text-align: center; padding: 10px; font-size: 12px; color: #777;"> <p>IoT Crop Monitoring System</p> <p>Please take immediate action if required.</p> </div> </div> </body> </html> """
+    text_content = "Alert detected! Please view this email in an HTML-supported client." 
+    email = EmailMultiAlternatives( subject, text_content, settings.EMAIL_HOST_USER, [user.email] ) 
+    email.attach_alternative(html_content, "text/html") 
+    email.send()
 
 def send_alert_sms(sensor_data, user):
     phone = getattr(user.userprofile, "phone", None)

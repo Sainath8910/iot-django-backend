@@ -5,6 +5,7 @@ from django.utils.dateparse import parse_datetime
 from django.core.files import File
 import django
 import sys
+import threading
 
 sys.path.append(".")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iot_backend.settings")
@@ -12,6 +13,7 @@ django.setup()
 
 from sensors.models import SensorReading, Device
 from sensors.ai_engine import predict_disease, predict_stress, agrotech_decision
+from sensors.views import send_alerts_async
 
 
 COLLECTOR_URL = "https://iot-simulation-jl3f.onrender.com/get-unprocessed/"
@@ -42,6 +44,8 @@ def process():
             return
 
         for item in data:
+            if SensorReading.objects.filter(reading_id=item["reading_id"]).exists():
+                continue
             print("Processing:", item["reading_id"])
 
             # Download image
@@ -63,7 +67,8 @@ def process():
 
             # Save locally (optional)
             device, _ = Device.objects.get_or_create(device_id=item["device_id"])
-
+            is_healthy = "healthy" in disease.lower()
+            alert_required = (not is_healthy or stress == "HIGH")
             with open(img_path, "rb") as f:
                 django_file = File(f)
 
@@ -79,8 +84,26 @@ def process():
                     disease=disease,
                     stress_level=stress,
                     decision=decision,
+                    alert=alert_required,
                     crop=crop
                 )
+                if alert_required:
+                    threading.Thread(
+                        target=send_alerts_async,
+                        args=({
+                            "crop": crop,
+                            "temperature": item["temperature"],
+                            "humidity": item["humidity"],
+                            "soil_moisture": item["soil_moisture"],
+                            "ph": item["ph"],
+                            "disease": disease,
+                            "confidence": confidence,
+                            "stress": stress,
+                            "decision": decision,
+                            "timestamp": parse_datetime(item["timestamp"])
+                        }, device.owner),
+                        daemon=True
+                    ).start()
 
             # Send back to collector
             requests.post(
