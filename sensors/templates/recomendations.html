@@ -6,129 +6,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 
   <style>
-    body { font-family: Manrope, sans-serif; }
+    body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
 
 <body class="bg-[#152111] text-white">
 
-<div class="max-w-7xl mx-auto p-6 lg:p-10 space-y-8">
+<div class="max-w-7xl mx-auto p-6 lg:p-10 space-y-10">
 
-  <!-- TOP BAR -->
+  <!-- HEADER -->
   <div class="flex justify-between items-center">
     <button onclick="window.history.back()"
-      class="flex items-center gap-2 bg-[#49e619] text-black px-4 py-2 rounded-full font-bold">
+      class="flex items-center gap-2 bg-[#49e619] hover:bg-[#3ecc14] text-black px-5 py-2 rounded-full font-semibold transition">
       <span class="material-symbols-outlined">arrow_back</span>
       Back
     </button>
   </div>
 
-  <!-- SENSOR SUMMARY -->
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+  <!-- SENSOR GRID -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
 
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">thermostat</span>
-      <p>Temperature</p>
-      <h3 id="tempValue"></h3>
+    <!-- SENSOR CARD -->
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center shadow-lg">
+      <span class="material-symbols-outlined text-[#49e619] text-2xl">thermostat</span>
+      <p class="text-xs text-gray-400">Temperature</p>
+      <h3 id="tempValue" class="font-bold text-lg"></h3>
     </div>
 
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">humidity_high</span>
-      <p>Humidity</p>
-      <h3 id="humidityValue"></h3>
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center shadow-lg">
+      <span class="material-symbols-outlined text-[#49e619] text-2xl">humidity_high</span>
+      <p class="text-xs text-gray-400">Humidity</p>
+      <h3 id="humidityValue" class="font-bold text-lg"></h3>
     </div>
 
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">potted_plant</span>
-      <p>Soil Moisture</p>
-      <h3 id="moistureValue"></h3>
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center shadow-lg">
+      <span class="material-symbols-outlined text-[#49e619] text-2xl">potted_plant</span>
+      <p class="text-xs text-gray-400">Soil Moisture</p>
+      <h3 id="moistureValue" class="font-bold text-lg"></h3>
     </div>
 
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">science</span>
-      <p>pH Level</p>
-      <h3 id="phValue"></h3>
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center shadow-lg">
+      <span class="material-symbols-outlined text-[#49e619] text-2xl">science</span>
+      <p class="text-xs text-gray-400">pH Level</p>
+      <h3 id="phValue" class="font-bold text-lg"></h3>
     </div>
 
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">devices</span>
-      <p>Device</p>
-      <h3 id="deviceId" class="text-[#49e619]"></h3>
-    </div>
-
-    <div class="sensor-card">
-      <span class="material-symbols-outlined">schedule</span>
-      <p>Captured At</p>
-      <h3 id="caseTime" class="text-sm"></h3>
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center shadow-lg">
+      <span class="material-symbols-outlined text-[#49e619] text-2xl">devices</span>
+      <p class="text-xs text-gray-400">Device</p>
+      <h3 id="deviceId" class="font-bold text-[#49e619]"></h3>
     </div>
 
   </div>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
     <!-- LEFT PANEL -->
-    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
 
-      <!-- IMAGE -->
       <div class="relative">
-        <div id="leafImage"
-             class="aspect-square rounded-xl bg-center bg-cover max-h-[380px]">
+
+        <!-- Crop Overlay -->
+        <div id="cropOverlay"
+             class="absolute top-3 left-3 bg-[#49e619]/90 px-3 py-1 rounded-full text-xs font-semibold uppercase text-black hidden">
         </div>
 
-        <!-- IMAGE TIMESTAMP -->
+        <!-- Image -->
+        <div id="leafImage"
+             class="aspect-square rounded-xl bg-center bg-cover shadow-md">
+        </div>
+
+        <!-- Timestamp -->
         <div id="imageTime"
-             class="absolute bottom-3 right-3 bg-black/60 text-xs px-3 py-1 rounded-full hidden">
+             class="absolute bottom-3 right-3 bg-black/70 text-xs px-3 py-1 rounded-full hidden">
         </div>
       </div>
 
-      <!-- STATUS -->
+      <!-- STRESS -->
       <div class="grid grid-cols-2 gap-4">
-
-        <div id="stressBox" class="status-card hidden">
-          <p>Stress Level</p>
-          <h4 id="stressValue"></h4>
+        <div id="stressBox" class="hidden rounded-xl p-4 border">
+          <p class="text-xs uppercase tracking-wide">Stress Level</p>
+          <h4 id="stressValue" class="font-bold text-lg"></h4>
         </div>
-
-        <div id="timeBox" class="status-card hidden">
-          <p>Timestamp</p>
-          <h4 id="caseTime2"></h4>
-        </div>
-
       </div>
     </div>
 
     <!-- RIGHT PANEL -->
-    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
 
       <div>
-        <p id="cropName" class="uppercase text-sm tracking-wider text-[#49e619]"></p>
-        <h2 id="diseaseName" class="text-3xl font-black mt-1"></h2>
+        <h2 id="diseaseName" class="text-3xl font-extrabold"></h2>
       </div>
 
-      <div id="reasonBox" class="hidden">
-        <p class="section-label">Why this happened</p>
+      <div id="reasonBox" class="hidden bg-[#49e619]/10 border border-[#49e619]/30 p-4 rounded-xl">
+        <p class="text-xs text-[#49e619] uppercase">Why this happened</p>
         <p id="aiReason" class="text-sm mt-1"></p>
       </div>
 
-      <div id="treatmentBox" class="hidden">
-        <p class="section-label">What to do</p>
-        <ul id="aiTreatment" class="list-disc list-inside text-sm mt-2"></ul>
+      <div id="treatmentBox" class="hidden bg-[#49e619]/10 border border-[#49e619]/30 p-4 rounded-xl">
+        <p class="text-xs text-[#49e619] uppercase">Recommended Actions</p>
+        <ul id="aiTreatment" class="list-disc list-inside text-sm mt-2 space-y-1"></ul>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
 
-        <div id="fertilizerBox" class="recommend-card hidden">
-          <p>Recommended Fertilizer</p>
-          <h4 id="fertilizerName"></h4>
+        <div id="fertilizerBox" class="hidden bg-[#49e619]/10 border border-[#49e619]/30 rounded-xl p-4">
+          <p class="text-xs text-[#49e619] uppercase">Fertilizer</p>
+          <h4 id="fertilizerName" class="font-bold text-lg"></h4>
         </div>
 
-        <div id="sprayBox" class="recommend-card hidden">
-          <p>Recommended Spray</p>
-          <h4 id="sprayName"></h4>
+        <div id="sprayBox" class="hidden bg-[#49e619]/10 border border-[#49e619]/30 rounded-xl p-4">
+          <p class="text-xs text-[#49e619] uppercase">Spray</p>
+          <h4 id="sprayName" class="font-bold text-lg"></h4>
         </div>
 
       </div>
@@ -137,68 +131,6 @@
 
 </div>
 
-<!-- STYLES -->
-<style>
-.sensor-card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 14px;
-  text-align: center;
-}
-.sensor-card span {
-  font-size: 20px;
-  color: #49e619;
-}
-.sensor-card p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-}
-.sensor-card h3 {
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-
-.status-card {
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
-  padding: 14px;
-}
-.status-card p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-}
-.status-card h4 {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.section-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.4);
-}
-
-.recommend-card {
-  background: rgba(73,230,25,0.1);
-  border-radius: 14px;
-  padding: 16px;
-}
-.recommend-card p {
-  font-size: 11px;
-  color: #49e619;
-  text-transform: uppercase;
-}
-.recommend-card h4 {
-  font-size: 15px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-</style>
-
-<!-- SCRIPT -->
 <script>
 const id = new URLSearchParams(window.location.search).get("reading");
 
@@ -207,12 +139,16 @@ fetch(`/case/${id}/`)
 .then(d => {
 
   if (d.image) {
-    document.getElementById("leafImage").style.backgroundImage = `url('${d.image}')`;
-    document.getElementById("imageTime").textContent = d.time;
-    document.getElementById("imageTime").classList.remove("hidden");
+    leafImage.style.backgroundImage = `url('${d.image}')`;
+    imageTime.textContent = d.time;
+    imageTime.classList.remove("hidden");
   }
 
-  d.crop && (cropName.textContent = d.crop);
+  if (d.crop) {
+    cropOverlay.textContent = d.crop;
+    cropOverlay.classList.remove("hidden");
+  }
+
   d.disease && (diseaseName.textContent = d.disease);
 
   d.temperature && (tempValue.textContent = d.temperature + "°C");
@@ -220,13 +156,42 @@ fetch(`/case/${id}/`)
   d.soil_moisture && (moistureValue.textContent = d.soil_moisture + "%");
   d.ph && (phValue.textContent = d.ph);
   d.device && (deviceId.textContent = d.device);
-  d.time && (caseTime.textContent = d.time);
 
-  if (d.stress) {
-    stressValue.textContent = d.stress;
+  // STRESS
+  if (d.stress !== undefined && d.stress !== null) {
+    let raw = d.stress;
+    let text = "";
+    let color = "";
+
+    if (typeof raw === "string" && isNaN(raw)) {
+      let val = raw.toLowerCase();
+      if (val.includes("low")) {
+        text = "LOW";
+        color = "bg-[#49e619]/20 text-[#49e619] border-[#49e619]/40";
+      } else if (val.includes("medium")) {
+        text = "MEDIUM";
+        color = "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+      } else {
+        text = "HIGH";
+        color = "bg-red-500/20 text-red-300 border-red-500/30";
+      }
+    } else {
+      let level = parseFloat(raw);
+      if (level < 30) {
+        text = "LOW";
+        color = "bg-[#49e619]/20 text-[#49e619] border-[#49e619]/40";
+      } else if (level < 70) {
+        text = "MEDIUM";
+        color = "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+      } else {
+        text = "HIGH";
+        color = "bg-red-500/20 text-red-300 border-red-500/30";
+      }
+    }
+
+    stressValue.textContent = text;
+    stressBox.className = `rounded-xl p-4 border ${color}`;
     stressBox.classList.remove("hidden");
-    caseTime2.textContent = d.time;
-    timeBox.classList.remove("hidden");
   }
 
   if (d.recommendation?.reason) {
