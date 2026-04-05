@@ -2,30 +2,40 @@ import os
 import json
 import numpy as np
 from django.conf import settings
+
+# ===== TensorFlow (Backup Model) =====
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 
+# ===== PyTorch (Main Model) =====
+import torch
+import torch.nn as nn
+from torchvision import transforms, models
+from PIL import Image
+
+# ===== PATHS =====
 MODEL_DIR = os.path.join(settings.BASE_DIR, "model")
-MODEL_PATH = os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
-cnn_model = load_model(MODEL_PATH)
 
-def get_model():
-    global cnn_model
+KERAS_MODEL_PATH = os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
+PTH_MODEL_PATH = os.path.join(MODEL_DIR, "crop_model_v2.pth")
 
-    if cnn_model is None:
-        MODEL_PATH = os.path.join(MODEL_DIR, "agrotech_resnet50.h5")
-        cnn_model = load_model(MODEL_PATH)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.set_num_threads(1)
 
-    return cnn_model
-
-# Class index mapping
+# ===== LOAD CLASS MAP =====
 with open(os.path.join(MODEL_DIR, "class_indices.json")) as f:
     class_map = json.load(f)
     class_map = {v: k for k, v in class_map.items()}
 
+PTH_CLASS_NAMES = list(class_map.values())
 
+# ===== LOAD CROP PROFILES =====
+with open(os.path.join(MODEL_DIR, "crop_data.json")) as f:
+    CROP_PROFILES = json.load(f)
+
+# ===== HUMAN READABLE LABELS =====
 CLASS_MAP = {
     "Apple_Apple_scab": "Apple scab",
     "Apple_Black_rot": "Black rot",
@@ -79,19 +89,89 @@ CLASS_MAP = {
     "Tomato_healthy": "Healthy"
 }
 
+# =========================================================
+# 🔹 MODEL LOADERS
+# =========================================================
 
-with open(os.path.join(MODEL_DIR, "crop_data.json")) as f:
-    CROP_PROFILES = json.load(f)
+keras_model = None
+pth_model = None
 
 
-def predict_disease(img_path):
+def get_keras_model():
+    global keras_model
+    if keras_model is None:
+        keras_model = load_model(KERAS_MODEL_PATH)
+    return keras_model
+
+
+def get_pth_model():
+    global pth_model
+
+    if pth_model is None:
+        # ✅ Use MobileNetV2 instead of ResNet
+        model = models.mobilenet_v2(weights=None)
+
+        # Replace classifier
+        model.classifier[1] = nn.Linear(
+            model.last_channel,
+            len(PTH_CLASS_NAMES)
+        )
+
+        model.load_state_dict(torch.load(PTH_MODEL_PATH, map_location=DEVICE))
+        model.to(DEVICE)
+        model.eval()
+
+        pth_model = model
+
+    return pth_model
+
+
+# =========================================================
+# 🔹 PREPROCESSING
+# =========================================================
+
+pth_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
+
+# =========================================================
+# 🔹 PREDICTION FUNCTIONS
+# =========================================================
+
+def predict_disease_pth(img_path):
+    model = get_pth_model()
+
+    image = Image.open(img_path).convert("RGB")
+    image = pth_transform(image).unsqueeze(0).to(DEVICE)
+
+    with torch.no_grad():
+        outputs = model(image)
+        probs = torch.softmax(outputs, dim=1)[0]
+
+    confidence, class_id = torch.max(probs, 0)
+
+    raw_label = PTH_CLASS_NAMES[class_id.item()].strip("_")
+    crop = raw_label.split("_", 1)[0]
+    disease = CLASS_MAP.get(raw_label, "Unknown disease")
+
+    return crop, disease, round(float(confidence.item()) * 100, 2)
+
+
+def predict_disease_keras(img_path):
     img = image.load_img(img_path, target_size=(224, 224))
     img = image.img_to_array(img)
 
     img = preprocess_input(img)
     img = np.expand_dims(img, axis=0)
-    model = get_model()
+
+    model = get_keras_model()
     preds = model.predict(img)
+
     class_id = int(np.argmax(preds))
     confidence = float(np.max(preds))
 
@@ -102,8 +182,31 @@ def predict_disease(img_path):
     return crop, disease, round(confidence * 100, 2)
 
 
+# =========================================================
+# 🔥 MAIN PREDICTION FUNCTION
+# =========================================================
+
+def predict_disease(img_path):
+    # Primary model (PyTorch)
+    crop, disease, confidence = predict_disease_pth(img_path)
+
+    # Fallback logic
+    if confidence < 70:
+        try:
+            return predict_disease_keras(img_path)
+        except:
+            pass
+
+    return crop, disease, confidence
+
+
+# =========================================================
+# 🔹 STRESS ANALYSIS
+# =========================================================
+
 def normalize_crop(crop):
     return str(crop).strip().lower()
+
 
 def predict_stress(crop, temp, humidity, moisture, ph):
     crop = normalize_crop(crop)
@@ -133,6 +236,10 @@ def predict_stress(crop, temp, humidity, moisture, ph):
     else:
         return "HIGH"
 
+
+# =========================================================
+# 🔹 FINAL DECISION ENGINE
+# =========================================================
 
 def agrotech_decision(disease, stress):
     is_healthy = "healthy" in disease.lower()
